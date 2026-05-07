@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="src/UnoPropertyGrid/UnoPropertyGrid.csproj" />
+  <Project Path="src/UnoPropertyGrid.Tests/UnoPropertyGrid.Tests.csproj" />
+</Solution>
