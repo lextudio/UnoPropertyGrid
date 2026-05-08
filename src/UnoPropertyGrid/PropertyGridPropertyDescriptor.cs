@@ -1,39 +1,50 @@
 using System.ComponentModel;
 using System.Globalization;
+using System.Reflection;
 
 namespace UnoPropertyGrid;
 
 public sealed class PropertyGridPropertyDescriptor
 {
     readonly object _component;
-    readonly PropertyDescriptor _descriptor;
+    readonly PropertyInfo _property;
 
-    public PropertyGridPropertyDescriptor(object component, PropertyDescriptor descriptor)
+    public PropertyGridPropertyDescriptor(object component, PropertyInfo property)
     {
         _component = component ?? throw new ArgumentNullException(nameof(component));
-        _descriptor = descriptor ?? throw new ArgumentNullException(nameof(descriptor));
+        _property = property ?? throw new ArgumentNullException(nameof(property));
     }
 
-    public string Name => _descriptor.Name;
-    public string DisplayName => string.IsNullOrWhiteSpace(_descriptor.DisplayName) ? _descriptor.Name : _descriptor.DisplayName;
-    public string Category => string.IsNullOrWhiteSpace(_descriptor.Category) ? "Misc" : _descriptor.Category;
-    public string Description => _descriptor.Description ?? string.Empty;
-    public Type PropertyType => _descriptor.PropertyType;
-    public bool IsReadOnly => _descriptor.IsReadOnly;
-    public bool IsBrowsable => _descriptor.IsBrowsable;
-    public AttributeCollection Attributes => _descriptor.Attributes;
+    public string Name => _property.Name;
 
-    public object? GetValue()
-    {
-        return _descriptor.GetValue(_component);
-    }
+    public string DisplayName =>
+        _property.GetCustomAttribute<DisplayNameAttribute>()?.DisplayName is { Length: > 0 } dn ? dn : _property.Name;
+
+    public string Category =>
+        _property.GetCustomAttribute<CategoryAttribute>()?.Category is { Length: > 0 } cat ? cat : "Misc";
+
+    public string Description =>
+        _property.GetCustomAttribute<DescriptionAttribute>()?.Description ?? string.Empty;
+
+    public Type PropertyType => _property.PropertyType;
+
+    public bool IsReadOnly =>
+        !_property.CanWrite || _property.GetCustomAttribute<ReadOnlyAttribute>()?.IsReadOnly == true;
+
+    public bool IsBrowsable =>
+        _property.GetCustomAttribute<BrowsableAttribute>()?.Browsable ?? true;
+
+    public IEnumerable<Attribute> Attributes =>
+        _property.GetCustomAttributes().OfType<Attribute>();
+
+    public object? GetValue() => _property.GetValue(_component);
 
     public void SetValue(object? value)
     {
         if (IsReadOnly)
             throw new InvalidOperationException($"Property '{Name}' is read-only.");
 
-        _descriptor.SetValue(_component, ConvertValue(value));
+        _property.SetValue(_component, ConvertValue(value));
     }
 
     object? ConvertValue(object? value)
@@ -52,6 +63,7 @@ public sealed class PropertyGridPropertyDescriptor
                 ? Enum.Parse(targetType, text)
                 : Enum.ToObject(targetType, value);
 
+        // TypeDescriptor.GetConverter(Type) is safe — it doesn't touch COM descriptors
         var converter = TypeDescriptor.GetConverter(targetType);
         if (converter.CanConvertFrom(value.GetType()))
             return converter.ConvertFrom(null, CultureInfo.CurrentCulture, value);

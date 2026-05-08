@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using System.Reflection;
 
 namespace UnoPropertyGrid;
 
@@ -9,12 +10,16 @@ public sealed class TypeDescriptorPropertyProvider : IPropertyGridPropertyProvid
         if (component == null)
             throw new ArgumentNullException(nameof(component));
 
-        foreach (PropertyDescriptor descriptor in TypeDescriptor.GetProperties(component))
+        foreach (var property in component.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance))
         {
-            if (!descriptor.IsBrowsable)
+            var browsable = property.GetCustomAttribute<BrowsableAttribute>();
+            if (browsable != null && !browsable.Browsable)
                 continue;
 
-            yield return new PropertyGridPropertyDescriptor(component, descriptor);
+            if (!property.CanRead)
+                continue;
+
+            yield return new PropertyGridPropertyDescriptor(component, property);
         }
     }
 }
