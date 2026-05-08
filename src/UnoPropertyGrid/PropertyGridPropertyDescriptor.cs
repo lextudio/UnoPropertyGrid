@@ -44,7 +44,10 @@ public sealed class PropertyGridPropertyDescriptor
         if (IsReadOnly)
             throw new InvalidOperationException($"Property '{Name}' is read-only.");
 
-        _property.SetValue(_component, ConvertValue(value));
+        var converted = ConvertValue(value);
+        PropertyGridLogger.Log($"Descriptor [{Name}]: SetValue component={_component?.GetType().Name}, value={value}, converted={converted}");
+        _property.SetValue(_component, converted);
+        PropertyGridLogger.Log($"Descriptor [{Name}]: SetValue done, read-back={_property.GetValue(_component)}");
     }
 
     object? ConvertValue(object? value)

@@ -28,7 +28,7 @@ public sealed partial class PropertyGridControl : UserControl
             new PropertyMetadata(PropertyGridSortMode.Categorized, OnFilterPropertyChanged));
 
     readonly ObservableCollection<PropertyGridPropertyViewModel> _properties = new();
-    readonly ObservableCollection<PropertyGridPropertyViewModel> _visibleProperties = new();
+    readonly ObservableCollection<object> _visibleProperties = new();
     readonly IPropertyGridPropertyProvider _propertyProvider = new TypeDescriptorPropertyProvider();
     string _searchText = string.Empty;
 
@@ -65,7 +65,14 @@ public sealed partial class PropertyGridControl : UserControl
 
     static void OnFilterPropertyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
-        ((PropertyGridControl)d).ApplyFilters();
+        var control = (PropertyGridControl)d;
+        if (e.Property == SortModeProperty && control.CategorizedButton is not null && control.AlphabeticalButton is not null)
+        {
+            var mode = (PropertyGridSortMode)e.NewValue;
+            control.CategorizedButton.IsChecked = mode == PropertyGridSortMode.Categorized;
+            control.AlphabeticalButton.IsChecked = mode == PropertyGridSortMode.Alphabetical;
+        }
+        control.ApplyFilters();
     }
 
     public void Refresh()
@@ -109,6 +116,9 @@ public sealed partial class PropertyGridControl : UserControl
 
     void ApplyFilters()
     {
+        if (CategoryComboBox is null)
+            return;
+
         var category = CategoryComboBox.SelectedItem as string;
         IEnumerable<PropertyGridPropertyViewModel> query = _properties;
 
@@ -122,13 +132,27 @@ public sealed partial class PropertyGridControl : UserControl
             query = query.Where(p => p.DisplayName.Contains(_searchText, StringComparison.CurrentCultureIgnoreCase)
                                   || p.Name.Contains(_searchText, StringComparison.CurrentCultureIgnoreCase));
 
-        query = SortMode == PropertyGridSortMode.Categorized
-            ? query.OrderBy(p => p.Category, StringComparer.CurrentCultureIgnoreCase).ThenBy(p => p.DisplayName, StringComparer.CurrentCultureIgnoreCase)
-            : query.OrderBy(p => p.DisplayName, StringComparer.CurrentCultureIgnoreCase);
-
         _visibleProperties.Clear();
-        foreach (var property in query)
-            _visibleProperties.Add(property);
+        if (SortMode == PropertyGridSortMode.Categorized)
+        {
+            foreach (var group in query.GroupBy(p => p.Category, StringComparer.CurrentCultureIgnoreCase).OrderBy(g => g.Key, StringComparer.CurrentCultureIgnoreCase))
+            {
+                _visibleProperties.Add(new PropertyGroupHeader(group.Key));
+                foreach (var property in group.OrderBy(p => p.DisplayName, StringComparer.CurrentCultureIgnoreCase))
+                    _visibleProperties.Add(property);
+            }
+        }
+        else
+        {
+            foreach (var property in query.OrderBy(p => p.DisplayName, StringComparer.CurrentCultureIgnoreCase))
+                _visibleProperties.Add(property);
+        }
+    }
+
+    void OnSortModeChecked(object sender, RoutedEventArgs e)
+    {
+        if (sender is RadioButton rb)
+            SortMode = rb == CategorizedButton ? PropertyGridSortMode.Categorized : PropertyGridSortMode.Alphabetical;
     }
 
     void OnSearchTextChanged(object sender, TextChangedEventArgs e)

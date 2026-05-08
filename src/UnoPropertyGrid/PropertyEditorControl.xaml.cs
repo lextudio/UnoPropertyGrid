@@ -40,12 +40,14 @@ public sealed partial class PropertyEditorControl : UserControl, INotifyProperty
 
     void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
+        PropertyGridLogger.Log($"Editor [{ViewModel?.Name}]: OnViewModelPropertyChanged prop={e.PropertyName}, _updatingFromEditor={_updatingFromEditor}");
         if (!_updatingFromEditor)
             NotifyBindingsChanged();
     }
 
     void NotifyBindingsChanged()
     {
+        PropertyGridLogger.Log($"Editor [{ViewModel?.Name}]: NotifyBindingsChanged, BooleanValue={BooleanValue}");
         OnPropertyChanged(nameof(BooleanValue));
         OnPropertyChanged(nameof(TextValue));
         OnPropertyChanged(nameof(NumberValue));
@@ -61,8 +63,17 @@ public sealed partial class PropertyEditorControl : UserControl, INotifyProperty
 
     public bool? BooleanValue
     {
-        get => ViewModel?.BooleanValue;
-        set => SetFromEditor(() => { if (ViewModel != null) ViewModel.BooleanValue = value; });
+        get
+        {
+            var v = ViewModel?.BooleanValue;
+            PropertyGridLogger.Log($"Editor [{ViewModel?.Name}]: BooleanValue GET => {v}");
+            return v;
+        }
+        set
+        {
+            PropertyGridLogger.Log($"Editor [{ViewModel?.Name}]: BooleanValue SET => {value}");
+            SetFromEditor(() => { if (ViewModel != null) ViewModel.BooleanValue = value; });
+        }
     }
 
     public string TextValue

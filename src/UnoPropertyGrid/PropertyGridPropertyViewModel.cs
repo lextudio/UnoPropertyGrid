@@ -31,17 +31,20 @@ public sealed class PropertyGridPropertyViewModel : INotifyPropertyChanged
         get => _value;
         set
         {
+            PropertyGridLogger.Log($"VM [{Name}]: Value.set incoming={value} (type={value?.GetType().Name}), current _value={_value}, equal={Equals(_value, value)}");
             if (Equals(_value, value))
                 return;
 
             try
             {
                 _property.SetValue(value);
+                PropertyGridLogger.Log($"VM [{Name}]: SetValue succeeded");
                 _error = null;
                 RefreshValue();
             }
             catch (Exception ex)
             {
+                PropertyGridLogger.Log($"VM [{Name}]: SetValue FAILED: {ex}");
                 Error = ex.Message;
             }
         }
@@ -77,6 +80,7 @@ public sealed class PropertyGridPropertyViewModel : INotifyPropertyChanged
         try
         {
             _value = _property.GetValue();
+            PropertyGridLogger.Log($"VM [{Name}]: RefreshValue read back _value={_value}");
             Error = null;
             OnPropertyChanged(nameof(Value));
             OnPropertyChanged(nameof(DisplayValue));
@@ -87,6 +91,7 @@ public sealed class PropertyGridPropertyViewModel : INotifyPropertyChanged
         }
         catch (Exception ex)
         {
+            PropertyGridLogger.Log($"VM [{Name}]: RefreshValue FAILED: {ex.Message}");
             Error = ex.Message;
         }
     }
@@ -96,25 +101,25 @@ public sealed class PropertyGridPropertyViewModel : INotifyPropertyChanged
     public bool? BooleanValue
     {
         get => Value is bool value ? value : null;
-        set => Value = value;
+        set { if (EditorKind == PropertyEditorKind.Boolean) Value = value; }
     }
 
     public string StringValue
     {
         get => Value?.ToString() ?? string.Empty;
-        set => Value = value;
+        set { if (EditorKind == PropertyEditorKind.Text) Value = value; }
     }
 
     public string NumberValue
     {
         get => Value?.ToString() ?? string.Empty;
-        set => Value = string.IsNullOrWhiteSpace(value) ? null : value;
+        set { if (EditorKind == PropertyEditorKind.Number) Value = string.IsNullOrWhiteSpace(value) ? null : value; }
     }
 
     public object? EnumValue
     {
         get => Value;
-        set => Value = value;
+        set { if (EditorKind == PropertyEditorKind.Enum) Value = value; }
     }
 
     void OnPropertyChanged([CallerMemberName] string? propertyName = null)

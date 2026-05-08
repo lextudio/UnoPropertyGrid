@@ -4,16 +4,75 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="using:UnoPropertyGrid">
 
-    <Grid RowSpacing="8">
+    <UserControl.Resources>
+        <!-- Group header row -->
+        <DataTemplate x:Key="GroupHeaderTemplate">
+            <Border Background="{ThemeResource SystemControlBackgroundChromeMediumLowBrush}"
+                    Padding="8,4"
+                    Margin="0,4,0,0">
+                <TextBlock Text="{Binding Category}"
+                           FontSize="12"
+                           FontWeight="SemiBold"
+                           Opacity="0.75" />
+            </Border>
+        </DataTemplate>
+
+        <!-- Property row -->
+        <DataTemplate x:Key="PropertyTemplate">
+            <Grid ColumnSpacing="12" Padding="8,4">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="220" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <StackPanel VerticalAlignment="Center">
+                    <TextBlock Text="{Binding DisplayName}"
+                               FontSize="13" />
+                    <TextBlock Text="{Binding Description}"
+                               FontSize="11"
+                               Opacity="0.62"
+                               TextWrapping="WrapWholeWords" />
+                </StackPanel>
+
+                <local:PropertyEditorControl Grid.Column="1"
+                                             ViewModel="{Binding}" />
+            </Grid>
+        </DataTemplate>
+
+        <local:PropertyItemTemplateSelector x:Key="ItemTemplateSelector"
+                                            GroupHeaderTemplate="{StaticResource GroupHeaderTemplate}"
+                                            PropertyTemplate="{StaticResource PropertyTemplate}" />
+    </UserControl.Resources>
+
+    <Grid RowSpacing="4">
         <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <Grid ColumnSpacing="8">
+        <!-- Sort mode toggle -->
+        <StackPanel Orientation="Horizontal" Spacing="2">
+            <RadioButton x:Name="CategorizedButton"
+                         Content="⊞ Categorized"
+                         GroupName="SortMode"
+                         IsChecked="True"
+                         Checked="OnSortModeChecked"
+                         FontSize="12"
+                         Padding="8,4" />
+            <RadioButton x:Name="AlphabeticalButton"
+                         Content="A↓Z Alphabetical"
+                         GroupName="SortMode"
+                         Checked="OnSortModeChecked"
+                         FontSize="12"
+                         Padding="8,4" />
+        </StackPanel>
+
+        <!-- Search + category filter -->
+        <Grid Grid.Row="1" ColumnSpacing="8">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="180" />
+                <ColumnDefinition Width="140" />
             </Grid.ColumnDefinitions>
 
             <TextBox x:Name="SearchBox"
@@ -26,37 +85,16 @@
                       SelectionChanged="OnCategoryChanged" />
         </Grid>
 
-        <ScrollViewer Grid.Row="1"
+        <ScrollViewer Grid.Row="2"
                       HorizontalScrollBarVisibility="Disabled"
                       VerticalScrollBarVisibility="Auto">
-            <ItemsControl x:Name="PropertiesItemsControl">
+            <ItemsControl x:Name="PropertiesItemsControl"
+                          ItemTemplateSelector="{StaticResource ItemTemplateSelector}">
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
                         <StackPanel Spacing="1" />
                     </ItemsPanelTemplate>
                 </ItemsControl.ItemsPanel>
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate x:DataType="local:PropertyGridPropertyViewModel">
-                        <Grid ColumnSpacing="12" Padding="8,4">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="220" />
-                                <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
-
-                            <StackPanel VerticalAlignment="Center">
-                                <TextBlock Text="{x:Bind DisplayName}"
-                                           FontSize="13" />
-                                <TextBlock Text="{x:Bind Description}"
-                                           FontSize="11"
-                                           Opacity="0.62"
-                                           TextWrapping="WrapWholeWords" />
-                            </StackPanel>
-
-                            <local:PropertyEditorControl Grid.Column="1"
-                                                         ViewModel="{x:Bind}" />
-                        </Grid>
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
             </ItemsControl>
         </ScrollViewer>
     </Grid>
