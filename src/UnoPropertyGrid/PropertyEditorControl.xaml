@@ -23,6 +23,48 @@
                   HorizontalAlignment="Stretch"
                   Visibility="{x:Bind EnumEditorVisibility, Mode=OneWay}" />
 
+        <Grid Visibility="{x:Bind BrushEditorVisibility, Mode=OneWay}" ColumnSpacing="6">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="22" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <Border Width="18"
+                    Height="18"
+                    BorderBrush="{ThemeResource TextControlBorderBrush}"
+                    BorderThickness="1"
+                    VerticalAlignment="Center">
+                <Rectangle Fill="{x:Bind BrushPreview, Mode=OneWay}" />
+            </Border>
+            <ComboBox Grid.Column="1"
+                      ItemsSource="{x:Bind CommonBrushes, Mode=OneWay}"
+                      SelectedItem="{x:Bind BrushValue, Mode=TwoWay}"
+                      HorizontalAlignment="Stretch" />
+        </Grid>
+
+        <ComboBox x:Name="FontFamilyEditor"
+                  ItemsSource="{x:Bind FontFamilies, Mode=OneWay}"
+                  SelectedItem="{x:Bind FontFamilyValue, Mode=TwoWay}"
+                  HorizontalAlignment="Stretch"
+                  Visibility="{x:Bind FontFamilyEditorVisibility, Mode=OneWay}" />
+
+        <ComboBox x:Name="FontWeightEditor"
+                  ItemsSource="{x:Bind FontWeights, Mode=OneWay}"
+                  SelectedItem="{x:Bind FontWeightValue, Mode=TwoWay}"
+                  HorizontalAlignment="Stretch"
+                  Visibility="{x:Bind FontWeightEditorVisibility, Mode=OneWay}" />
+
+        <ComboBox x:Name="FontStyleEditor"
+                  ItemsSource="{x:Bind FontStyles, Mode=OneWay}"
+                  SelectedItem="{x:Bind FontStyleValue, Mode=TwoWay}"
+                  HorizontalAlignment="Stretch"
+                  Visibility="{x:Bind FontStyleEditorVisibility, Mode=OneWay}" />
+
+        <ComboBox x:Name="FontStretchEditor"
+                  ItemsSource="{x:Bind FontStretches, Mode=OneWay}"
+                  SelectedItem="{x:Bind FontStretchValue, Mode=TwoWay}"
+                  HorizontalAlignment="Stretch"
+                  Visibility="{x:Bind FontStretchEditorVisibility, Mode=OneWay}" />
+
         <TextBlock x:Name="ReadOnlyEditor"
                    Text="{x:Bind ReadOnlyValue, Mode=OneWay}"
                    Opacity="0.65"

@@ -5,97 +5,299 @@
     xmlns:local="using:UnoPropertyGrid">
 
     <UserControl.Resources>
-        <!-- Group header row -->
-        <DataTemplate x:Key="GroupHeaderTemplate">
-            <Border Background="{ThemeResource SystemControlBackgroundChromeMediumLowBrush}"
-                    Padding="8,4"
-                    Margin="0,4,0,0">
-                <TextBlock Text="{Binding Category}"
-                           FontSize="12"
-                           FontWeight="SemiBold"
-                           Opacity="0.75" />
-            </Border>
-        </DataTemplate>
+        <ResourceDictionary>
+            <ResourceDictionary.ThemeDictionaries>
+                <ResourceDictionary x:Key="Light">
+                    <SolidColorBrush x:Key="PropertyGridBackgroundBrush" Color="#F3F3F3" />
+                    <SolidColorBrush x:Key="PropertyGridPanelBrush" Color="#FFFFFF" />
+                    <SolidColorBrush x:Key="PropertyGridCellBrush" Color="#FFFFFF" />
+                    <SolidColorBrush x:Key="PropertyGridCategoryBrush" Color="#E8E8E8" />
+                    <SolidColorBrush x:Key="PropertyGridBorderBrush" Color="#D0D0D0" />
+                    <SolidColorBrush x:Key="PropertyGridForegroundBrush" Color="#1E1E1E" />
+                    <SolidColorBrush x:Key="PropertyGridMutedForegroundBrush" Color="#5F5F5F" />
+                    <SolidColorBrush x:Key="PropertyGridAccentBrush" Color="#007ACC" />
+                </ResourceDictionary>
+                <ResourceDictionary x:Key="Dark">
+                    <SolidColorBrush x:Key="PropertyGridBackgroundBrush" Color="#1E1E1E" />
+                    <SolidColorBrush x:Key="PropertyGridPanelBrush" Color="#252526" />
+                    <SolidColorBrush x:Key="PropertyGridCellBrush" Color="#2D2D30" />
+                    <SolidColorBrush x:Key="PropertyGridCategoryBrush" Color="#252526" />
+                    <SolidColorBrush x:Key="PropertyGridBorderBrush" Color="#3F3F46" />
+                    <SolidColorBrush x:Key="PropertyGridForegroundBrush" Color="#F1F1F1" />
+                    <SolidColorBrush x:Key="PropertyGridMutedForegroundBrush" Color="#C8C8C8" />
+                    <SolidColorBrush x:Key="PropertyGridAccentBrush" Color="#007ACC" />
+                </ResourceDictionary>
+                <ResourceDictionary x:Key="Default">
+                    <SolidColorBrush x:Key="PropertyGridBackgroundBrush" Color="#1E1E1E" />
+                    <SolidColorBrush x:Key="PropertyGridPanelBrush" Color="#252526" />
+                    <SolidColorBrush x:Key="PropertyGridCellBrush" Color="#2D2D30" />
+                    <SolidColorBrush x:Key="PropertyGridCategoryBrush" Color="#252526" />
+                    <SolidColorBrush x:Key="PropertyGridBorderBrush" Color="#3F3F46" />
+                    <SolidColorBrush x:Key="PropertyGridForegroundBrush" Color="#F1F1F1" />
+                    <SolidColorBrush x:Key="PropertyGridMutedForegroundBrush" Color="#C8C8C8" />
+                    <SolidColorBrush x:Key="PropertyGridAccentBrush" Color="#007ACC" />
+                </ResourceDictionary>
+            </ResourceDictionary.ThemeDictionaries>
+        </ResourceDictionary>
 
-        <!-- Property row -->
         <DataTemplate x:Key="PropertyTemplate">
-            <Grid ColumnSpacing="12" Padding="8,4">
+            <Grid ColumnSpacing="0" MinHeight="24" Background="{ThemeResource PropertyGridBackgroundBrush}">
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="220" />
+                    <ColumnDefinition Width="{Binding ElementName=RootControl, Path=NameColumnWidth}" />
                     <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="14" />
                 </Grid.ColumnDefinitions>
 
-                <StackPanel VerticalAlignment="Center">
+                <Border BorderBrush="{ThemeResource PropertyGridBorderBrush}" BorderThickness="0,0,0,1" Padding="20,2,4,2">
                     <TextBlock Text="{Binding DisplayName}"
-                               FontSize="13" />
-                    <TextBlock Text="{Binding Description}"
-                               FontSize="11"
-                               Opacity="0.62"
-                               TextWrapping="WrapWholeWords" />
-                </StackPanel>
+                               Foreground="{ThemeResource PropertyGridForegroundBrush}"
+                               FontSize="12"
+                               VerticalAlignment="Center"
+                               TextTrimming="CharacterEllipsis" />
+                </Border>
 
-                <local:PropertyEditorControl Grid.Column="1"
-                                             ViewModel="{Binding}" />
+                <Border Grid.Column="1"
+                        BorderBrush="{ThemeResource PropertyGridBorderBrush}"
+                        BorderThickness="0,0,0,1"
+                        Padding="4,1">
+                    <local:PropertyEditorControl ViewModel="{Binding}" />
+                </Border>
+
+                <Border Grid.Column="2"
+                        BorderBrush="{ThemeResource PropertyGridBorderBrush}"
+                        BorderThickness="0,0,0,1"
+                        Padding="3,0"
+                        ToolTipService.ToolTip="Default or overridden value indicator">
+                    <Rectangle Width="6"
+                               Height="6"
+                               Stroke="{ThemeResource PropertyGridMutedForegroundBrush}"
+                               StrokeThickness="1"
+                               Fill="Transparent"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center" />
+                </Border>
             </Grid>
         </DataTemplate>
 
-        <local:PropertyItemTemplateSelector x:Key="ItemTemplateSelector"
-                                            GroupHeaderTemplate="{StaticResource GroupHeaderTemplate}"
-                                            PropertyTemplate="{StaticResource PropertyTemplate}" />
+        <DataTemplate x:Key="CategoryTemplate">
+            <StackPanel Background="{ThemeResource PropertyGridBackgroundBrush}">
+                <ToggleButton IsChecked="{Binding IsExpanded, Mode=TwoWay}"
+                              HorizontalAlignment="Stretch"
+                              HorizontalContentAlignment="Stretch"
+                              Background="{ThemeResource PropertyGridCategoryBrush}"
+                              BorderBrush="{ThemeResource PropertyGridBorderBrush}"
+                              BorderThickness="0,0,0,1"
+                              Padding="0"
+                              MinHeight="24">
+                    <Grid ColumnSpacing="4">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="18" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <FontIcon Glyph="{Binding ExpandGlyph}"
+                                  FontSize="10"
+                                  Foreground="{ThemeResource PropertyGridForegroundBrush}"
+                                  VerticalAlignment="Center" />
+                        <TextBlock Grid.Column="1"
+                                   Text="{Binding Name}"
+                                   Foreground="{ThemeResource PropertyGridForegroundBrush}"
+                                   FontSize="12"
+                                   FontWeight="SemiBold"
+                                   VerticalAlignment="Center" />
+                    </Grid>
+                </ToggleButton>
+                <ItemsControl ItemsSource="{Binding Rows}"
+                              ItemTemplate="{StaticResource PropertyTemplate}"
+                              Visibility="{Binding RowsVisibility}" />
+            </StackPanel>
+        </DataTemplate>
+
+        <DataTemplate x:Key="EventTemplate">
+            <Grid ColumnSpacing="0" MinHeight="24" Background="{ThemeResource PropertyGridBackgroundBrush}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="{Binding ElementName=RootControl, Path=NameColumnWidth}" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="14" />
+                </Grid.ColumnDefinitions>
+
+                <Border BorderBrush="{ThemeResource PropertyGridBorderBrush}" BorderThickness="0,0,0,1" Padding="20,2,4,2">
+                    <TextBlock Text="{Binding DisplayName}"
+                               Foreground="{ThemeResource PropertyGridForegroundBrush}"
+                               FontSize="12"
+                               VerticalAlignment="Center"
+                               TextTrimming="CharacterEllipsis" />
+                </Border>
+
+                <TextBox Grid.Column="1"
+                         Text="{Binding HandlerName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                         FontSize="12"
+                         Padding="4,2"
+                         MinHeight="24" />
+
+                <Border Grid.Column="2"
+                        BorderBrush="{ThemeResource PropertyGridBorderBrush}"
+                        BorderThickness="0,0,0,1"
+                        Padding="3,0"
+                        ToolTipService.ToolTip="Default or overridden value indicator">
+                    <Rectangle Width="6"
+                               Height="6"
+                               Stroke="{ThemeResource PropertyGridMutedForegroundBrush}"
+                               StrokeThickness="1"
+                               Fill="Transparent"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center" />
+                </Border>
+            </Grid>
+        </DataTemplate>
     </UserControl.Resources>
 
-    <Grid RowSpacing="4">
+    <Grid x:Name="RootControl"
+          Background="{ThemeResource PropertyGridBackgroundBrush}"
+          RowSpacing="0">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <!-- Sort mode toggle -->
-        <StackPanel Orientation="Horizontal" Spacing="2">
-            <RadioButton x:Name="CategorizedButton"
-                         Content="⊞ Categorized"
-                         GroupName="SortMode"
-                         IsChecked="True"
-                         Checked="OnSortModeChecked"
-                         FontSize="12"
-                         Padding="8,4" />
-            <RadioButton x:Name="AlphabeticalButton"
-                         Content="A↓Z Alphabetical"
-                         GroupName="SortMode"
-                         Checked="OnSortModeChecked"
-                         FontSize="12"
-                         Padding="8,4" />
-        </StackPanel>
-
-        <!-- Search + category filter -->
-        <Grid Grid.Row="1" ColumnSpacing="8">
+        <Grid x:Name="HeaderPanel" ColumnSpacing="6" Padding="8,6,8,4" Background="{ThemeResource PropertyGridPanelBrush}">
             <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="26" />
+                <ColumnDefinition Width="34" />
                 <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="140" />
+                <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
 
-            <TextBox x:Name="SearchBox"
-                     PlaceholderText="Filter properties"
-                     TextChanged="OnSearchTextChanged" />
+            <FontIcon x:Name="ObjectGlyph"
+                      Grid.RowSpan="2"
+                      Glyph="&#xE8B7;"
+                      FontSize="18"
+                      Foreground="{ThemeResource PropertyGridMutedForegroundBrush}"
+                      VerticalAlignment="Center" />
+            <TextBlock x:Name="NameLabel"
+                       Grid.Column="1"
+                       Text="Name"
+                       Foreground="{ThemeResource PropertyGridForegroundBrush}"
+                       FontSize="12"
+                       FontWeight="SemiBold"
+                       VerticalAlignment="Center" />
+            <TextBox x:Name="ObjectNameBox"
+                     Grid.Column="2"
+                     Text="{x:Bind ObjectName, Mode=OneWay}"
+                     IsReadOnly="True"
+                     FontSize="12"
+                     Padding="4,2"
+                     MinHeight="22" />
 
-            <ComboBox x:Name="CategoryComboBox"
-                      Grid.Column="1"
-                      HorizontalAlignment="Stretch"
-                      SelectionChanged="OnCategoryChanged" />
+            <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="2">
+                <ToggleButton x:Name="PropertiesButton"
+                              IsChecked="True"
+                              Checked="OnViewModeChecked"
+                              Width="24"
+                              Height="22"
+                              Padding="0"
+                              ToolTipService.ToolTip="Properties">
+                    <FontIcon Glyph="&#xE713;" FontSize="13" />
+                </ToggleButton>
+                <ToggleButton x:Name="EventsButton"
+                              Checked="OnViewModeChecked"
+                              Width="24"
+                              Height="22"
+                              Padding="0"
+                              ToolTipService.ToolTip="Events">
+                    <FontIcon Glyph="&#xE945;" FontSize="13" />
+                </ToggleButton>
+            </StackPanel>
+
+            <TextBlock x:Name="TypeLabel"
+                       Grid.Row="1"
+                       Grid.Column="1"
+                       Text="Type"
+                       Foreground="{ThemeResource PropertyGridForegroundBrush}"
+                       FontSize="12"
+                       FontWeight="SemiBold"
+                       VerticalAlignment="Center" />
+            <TextBlock x:Name="ObjectTypeTextBlock"
+                       Grid.Row="1"
+                       Grid.Column="2"
+                       Text="{x:Bind ObjectTypeName, Mode=OneWay}"
+                       Foreground="{ThemeResource PropertyGridForegroundBrush}"
+                       FontSize="12"
+                       VerticalAlignment="Center"
+                       TextTrimming="CharacterEllipsis" />
         </Grid>
 
-        <ScrollViewer Grid.Row="2"
+        <Grid Grid.Row="1" Margin="8,4,8,3">
+            <TextBox x:Name="SearchBox"
+                     PlaceholderText="Search"
+                     TextChanged="OnSearchTextChanged"
+                     Padding="4,2,28,2"
+                     FontSize="12"
+                     MinHeight="24" />
+            <FontIcon x:Name="SearchGlyph"
+                      Glyph="&#xE721;"
+                      FontSize="14"
+                      Foreground="{ThemeResource PropertyGridMutedForegroundBrush}"
+                      HorizontalAlignment="Right"
+                      VerticalAlignment="Center"
+                      Margin="0,0,7,0" />
+        </Grid>
+
+        <StackPanel Grid.Row="2"
+                    x:Name="ArrangeByPanel"
+                    Orientation="Horizontal"
+                    Spacing="2"
+                    Padding="8,0,8,4"
+                    Background="{ThemeResource PropertyGridBackgroundBrush}">
+            <TextBlock Text="Arrange by:"
+                       FontSize="12"
+                       VerticalAlignment="Center"
+                       Foreground="{ThemeResource PropertyGridForegroundBrush}" />
+            <ComboBox x:Name="ArrangeByComboBox"
+                      SelectionChanged="OnArrangeByChanged"
+                      MinWidth="86"
+                      FontSize="12"
+                      Padding="2,0"
+                      SelectedIndex="0">
+                <ComboBoxItem Content="Category" />
+                <ComboBoxItem Content="Name" />
+            </ComboBox>
+        </StackPanel>
+
+        <ScrollViewer Grid.Row="3"
                       HorizontalScrollBarVisibility="Disabled"
                       VerticalScrollBarVisibility="Auto">
-            <ItemsControl x:Name="PropertiesItemsControl"
-                          ItemTemplateSelector="{StaticResource ItemTemplateSelector}">
-                <ItemsControl.ItemsPanel>
-                    <ItemsPanelTemplate>
-                        <StackPanel Spacing="1" />
-                    </ItemsPanelTemplate>
-                </ItemsControl.ItemsPanel>
-            </ItemsControl>
+            <Grid>
+                <StackPanel x:Name="CategorizedRowsPanel" />
+                <StackPanel x:Name="FlatRowsPanel" Visibility="Collapsed" />
+                <StackPanel x:Name="EventRowsPanel" Visibility="Collapsed" />
+            </Grid>
         </ScrollViewer>
+
+        <Border x:Name="DescriptionPane"
+                Grid.Row="4"
+                BorderThickness="0,1,0,0"
+                BorderBrush="{ThemeResource PropertyGridBorderBrush}"
+                Background="{ThemeResource PropertyGridPanelBrush}"
+                Padding="6,4"
+                Visibility="Collapsed">
+            <StackPanel>
+                <TextBlock x:Name="DescriptionTitle"
+                           Foreground="{ThemeResource PropertyGridForegroundBrush}"
+                           FontSize="12"
+                           FontWeight="SemiBold" />
+                <TextBlock x:Name="DescriptionText"
+                           Foreground="{ThemeResource PropertyGridMutedForegroundBrush}"
+                           FontSize="12"
+                           Opacity="0.75"
+                           TextWrapping="WrapWholeWords" />
+            </StackPanel>
+        </Border>
     </Grid>
 </UserControl>

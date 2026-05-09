@@ -6,6 +6,11 @@ public enum PropertyEditorKind
     Text,
     Number,
     Enum,
+    Brush,
+    FontFamily,
+    FontWeight,
+    FontStyle,
+    FontStretch,
     ReadOnly
 }
 
@@ -21,6 +26,16 @@ public static class PropertyEditorKindExtensions
             return PropertyEditorKind.Boolean;
         if (baseType == typeof(string) || baseType == typeof(char))
             return PropertyEditorKind.Text;
+        if (typeof(Microsoft.UI.Xaml.Media.Brush).IsAssignableFrom(baseType))
+            return PropertyEditorKind.Brush;
+        if (baseType == typeof(Microsoft.UI.Xaml.Media.FontFamily))
+            return PropertyEditorKind.FontFamily;
+        if (baseType == typeof(Windows.UI.Text.FontWeight))
+            return PropertyEditorKind.FontWeight;
+        if (baseType == typeof(Windows.UI.Text.FontStyle))
+            return PropertyEditorKind.FontStyle;
+        if (baseType == typeof(Windows.UI.Text.FontStretch))
+            return PropertyEditorKind.FontStretch;
         if (baseType.IsEnum)
             return PropertyEditorKind.Enum;
         if (IsNumeric(baseType))
