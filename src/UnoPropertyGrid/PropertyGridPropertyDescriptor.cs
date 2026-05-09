@@ -2,6 +2,7 @@ using System.ComponentModel;
 using System.Globalization;
 using System.Reflection;
 using Microsoft.UI;
+using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Media;
 using Windows.UI;
 using Windows.UI.Text;
@@ -62,11 +63,26 @@ public sealed class PropertyGridPropertyDescriptor
 
     public object? GetDefaultValue()
     {
+        if (_component is DependencyObject dependencyObject && TryGetDependencyPropertyDefaultValue(dependencyObject, out var dependencyDefaultValue))
+            return dependencyDefaultValue;
+
         var defaultValue = Attributes.OfType<DefaultValueAttribute>().FirstOrDefault();
         if (defaultValue != null)
             return defaultValue.Value;
 
         return GetValue();
+    }
+
+    bool TryGetDependencyPropertyDefaultValue(DependencyObject dependencyObject, out object? defaultValue)
+    {
+        defaultValue = null;
+        string fieldName = Name + "Property";
+        var field = dependencyObject.GetType().GetField(fieldName, BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy);
+        if (field?.GetValue(null) is not DependencyProperty dependencyProperty)
+            return false;
+
+        defaultValue = dependencyProperty.GetMetadata(dependencyObject.GetType()).DefaultValue;
+        return true;
     }
 
     public object? GetValue()

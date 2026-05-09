@@ -297,7 +297,7 @@ public sealed partial class PropertyGridControl : UserControl, INotifyPropertyCh
 
     void SyncToolbarState()
     {
-        if (PropertiesButton is null)
+        if (PropertiesButton is null || EventsButton is null)
             return;
 
         PropertiesButton.IsChecked = ViewMode == PropertyGridViewMode.Properties;
@@ -309,7 +309,8 @@ public sealed partial class PropertyGridControl : UserControl, INotifyPropertyCh
         ArrangeByPanel.Visibility = ViewMode == PropertyGridViewMode.Properties ? Visibility.Visible : Visibility.Collapsed;
         SearchBox.PlaceholderText = ViewMode == PropertyGridViewMode.Events ? "Search events" : "Search properties";
 
-        DescriptionPane.Visibility = ShowDescriptionPane ? Visibility.Visible : Visibility.Collapsed;
+        if (DescriptionPane is not null)
+            DescriptionPane.Visibility = ShowDescriptionPane ? Visibility.Visible : Visibility.Collapsed;
     }
 
     void MarkAllRowsDirty()
@@ -624,9 +625,16 @@ public sealed partial class PropertyGridControl : UserControl, INotifyPropertyCh
         if (selectedObject == null)
             return string.Empty;
 
-        var property = TypeDescriptor.GetProperties(selectedObject)
-            .Find("Name", ignoreCase: false);
-        var name = property?.GetValue(selectedObject)?.ToString();
+        string? name = null;
+        try
+        {
+            var property = selectedObject.GetType().GetProperty("Name", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+            name = property?.GetValue(selectedObject)?.ToString();
+        }
+        catch
+        {
+            name = null;
+        }
         return string.IsNullOrWhiteSpace(name) ? "<No Name>" : name;
     }
 

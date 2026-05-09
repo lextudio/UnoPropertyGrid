@@ -11,7 +11,7 @@ public sealed class TypeDescriptorPropertyProvider : IPropertyGridPropertyProvid
             throw new ArgumentNullException(nameof(component));
 
         var descriptorNames = new HashSet<string>(StringComparer.Ordinal);
-        foreach (PropertyDescriptor descriptor in TypeDescriptor.GetProperties(component))
+        foreach (PropertyDescriptor descriptor in GetSafeTypeDescriptorProperties(component))
         {
             descriptorNames.Add(descriptor.Name);
             if (!descriptor.IsBrowsable)
@@ -34,5 +34,33 @@ public sealed class TypeDescriptorPropertyProvider : IPropertyGridPropertyProvid
 
             yield return new PropertyGridPropertyDescriptor(component, property);
         }
+    }
+
+    static IEnumerable<PropertyDescriptor> GetSafeTypeDescriptorProperties(object component)
+    {
+        PropertyDescriptorCollection descriptors;
+        try
+        {
+            descriptors = TypeDescriptor.GetProperties(component);
+        }
+        catch (Exception ex) when (IsTypeDescriptorProviderLoadFailure(ex))
+        {
+            PropertyGridLogger.Log($"TypeDescriptor provider failed for {component.GetType().FullName}: {ex.GetBaseException().Message}");
+            yield break;
+        }
+
+        foreach (PropertyDescriptor descriptor in descriptors)
+            yield return descriptor;
+    }
+
+    static bool IsTypeDescriptorProviderLoadFailure(Exception ex)
+    {
+        for (var current = ex; current != null; current = current.InnerException)
+        {
+            if (current is FileNotFoundException or FileLoadException or TargetInvocationException)
+                return true;
+        }
+
+        return false;
     }
 }
