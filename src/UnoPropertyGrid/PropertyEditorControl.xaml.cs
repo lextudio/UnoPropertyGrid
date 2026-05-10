@@ -77,6 +77,7 @@ public sealed partial class PropertyEditorControl : UserControl, INotifyProperty
         OnPropertyChanged(nameof(FontStyleEditorVisibility));
         OnPropertyChanged(nameof(FontStretchEditorVisibility));
         OnPropertyChanged(nameof(ReadOnlyEditorVisibility));
+        OnPropertyChanged(nameof(ReadOnlyBooleanEditorVisibility));
     }
 
     public bool? BooleanValue
@@ -161,7 +162,31 @@ public sealed partial class PropertyEditorControl : UserControl, INotifyProperty
     public Visibility FontWeightEditorVisibility => ViewModel?.EditorKind == PropertyEditorKind.FontWeight ? Visibility.Visible : Visibility.Collapsed;
     public Visibility FontStyleEditorVisibility => ViewModel?.EditorKind == PropertyEditorKind.FontStyle ? Visibility.Visible : Visibility.Collapsed;
     public Visibility FontStretchEditorVisibility => ViewModel?.EditorKind == PropertyEditorKind.FontStretch ? Visibility.Visible : Visibility.Collapsed;
-    public Visibility ReadOnlyEditorVisibility => ViewModel == null || ViewModel.EditorKind == PropertyEditorKind.ReadOnly ? Visibility.Visible : Visibility.Collapsed;
+    public Visibility ReadOnlyEditorVisibility
+    {
+        get
+        {
+            if (ViewModel == null)
+                return Visibility.Visible;
+            if (ViewModel.EditorKind != PropertyEditorKind.ReadOnly)
+                return Visibility.Collapsed;
+            var baseType = Nullable.GetUnderlyingType(ViewModel.PropertyType) ?? ViewModel.PropertyType;
+            return baseType == typeof(bool) ? Visibility.Collapsed : Visibility.Visible;
+        }
+    }
+
+    public Visibility ReadOnlyBooleanEditorVisibility
+    {
+        get
+        {
+            if (ViewModel == null)
+                return Visibility.Collapsed;
+            if (ViewModel.EditorKind != PropertyEditorKind.ReadOnly)
+                return Visibility.Collapsed;
+            var baseType = Nullable.GetUnderlyingType(ViewModel.PropertyType) ?? ViewModel.PropertyType;
+            return baseType == typeof(bool) ? Visibility.Visible : Visibility.Collapsed;
+        }
+    }
 
     void SetFromEditor(Action update)
     {

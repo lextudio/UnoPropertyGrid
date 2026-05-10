@@ -5,8 +5,13 @@
 
     <Grid>
         <CheckBox x:Name="BooleanEditor"
-                  IsChecked="{x:Bind BooleanValue, Mode=TwoWay}"
-                  Visibility="{x:Bind BooleanEditorVisibility, Mode=OneWay}" />
+              IsChecked="{x:Bind BooleanValue, Mode=TwoWay}"
+              Visibility="{x:Bind BooleanEditorVisibility, Mode=OneWay}" />
+
+        <CheckBox x:Name="ReadOnlyBooleanEditor"
+              IsChecked="{x:Bind BooleanValue, Mode=OneWay}"
+              IsEnabled="False"
+              Visibility="{x:Bind ReadOnlyBooleanEditorVisibility, Mode=OneWay}" />
 
         <TextBox x:Name="TextEditor"
                  Text="{x:Bind TextValue, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
@@ -44,8 +49,15 @@
         <ComboBox x:Name="FontFamilyEditor"
                   ItemsSource="{x:Bind FontFamilies, Mode=OneWay}"
                   SelectedItem="{x:Bind FontFamilyValue, Mode=TwoWay}"
+                  FontFamily="{x:Bind FontFamilyValue, Mode=OneWay}"
                   HorizontalAlignment="Stretch"
-                  Visibility="{x:Bind FontFamilyEditorVisibility, Mode=OneWay}" />
+                  Visibility="{x:Bind FontFamilyEditorVisibility, Mode=OneWay}">
+            <ComboBox.ItemTemplate>
+                <DataTemplate>
+                    <TextBlock Text="{Binding}" FontFamily="{Binding}" TextTrimming="CharacterEllipsis" />
+                </DataTemplate>
+            </ComboBox.ItemTemplate>
+        </ComboBox>
 
         <ComboBox x:Name="FontWeightEditor"
                   ItemsSource="{x:Bind FontWeights, Mode=OneWay}"
