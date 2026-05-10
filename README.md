@@ -32,6 +32,7 @@ TODO
 ## TODO Items Before v1.0.0
 
 - [ ] Publish package to NuGet.org
+- [ ] Finish dark theme support (currently functional but not fully polished)
 - [ ] IME support improvements (currently functional but not fully polished)
 - [ ] Accessibility support (screen readers, keyboard navigation, etc.)
 
