@@ -7,6 +7,9 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <NoWarn>$(NoWarn);1574;1591;8632;UNO0006</NoWarn>
     <LangVersion>latest</LangVersion>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <EnableDefaultPageItems>false</EnableDefaultPageItems>
+    <EnableDefaultUnoItems>false</EnableDefaultUnoItems>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <Authors>LeXtudio</Authors>
     <Company>LeXtudio</Company>
@@ -26,14 +29,18 @@
   <PropertyGroup Condition="'$(TargetFramework)' == 'net9.0-windows10.0.19041.0'">
     <UseWinUI>true</UseWinUI>
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
-    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     <DefineConstants>$(DefineConstants);WINDOWS_APP_SDK</DefineConstants>
     <WindowsSdkPackageVersion>10.0.19041.57</WindowsSdkPackageVersion>
   </PropertyGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'net9.0-windows10.0.19041.0'">
     <PackageReference Include="Microsoft.WindowsAppSDK" />
+  </ItemGroup>
+  <ItemGroup>
     <Compile Include="**\*.cs" Exclude="obj\**\*.cs;bin\**\*.cs" />
+    <Page Include="PropertyGridControl.xaml" />
+    <Page Include="PropertyEditorControl.xaml" />
+    <Page Include="PropertyGridThemeResources.xaml" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\images\company_logo_512.png" Pack="true" PackagePath="/" />

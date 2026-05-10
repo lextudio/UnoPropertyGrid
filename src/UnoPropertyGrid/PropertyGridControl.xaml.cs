@@ -665,9 +665,9 @@ public sealed partial class PropertyGridControl : UserControl, INotifyPropertyCh
 
     void OnViewModeChecked(object sender, RoutedEventArgs e)
     {
-        if (sender == EventsButton)
+        if (ReferenceEquals(sender, EventsButton))
             ViewMode = PropertyGridViewMode.Events;
-        else if (sender == PropertiesButton)
+        else if (ReferenceEquals(sender, PropertiesButton))
             ViewMode = PropertyGridViewMode.Properties;
     }
 
