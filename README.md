@@ -1,6 +1,6 @@
 # UnoPropertyGrid
 
-UnoPropertyGrid is a desktop-first clone of the original Community Toolkit PropertyControl for [Uno Platform](https://platform.uno) and [WinUI 3](https://learn.microsoft.com/windows/apps/winui/winui3/).
+UnoPropertyGrid is a desktop-first property grid for [Uno Platform](https://platform.uno) and [WinUI 3](https://learn.microsoft.com/windows/apps/winui/winui3/).
 
 ![UnoPropertyGrid on macOS](https://github.com/lextudio/UnoPropertyGrid/blob/master/images/macos.png?raw=true)
 
@@ -19,11 +19,11 @@ Current scope:
 
 ## Get Started
 
-The main deliverable is a few NuGet packages:
+The main deliverable is a NuGet package:
 
 - [![NuGet](https://img.shields.io/nuget/v/LeXtudio.UnoPropertyGrid.svg?label=LeXtudio.UnoPropertyGrid)](https://www.nuget.org/packages/LeXtudio.UnoPropertyGrid) The core property grid component.
 
-Clone this repo and check out the sample projects to see how to use UnoPropertyGrid in your own applications (Uno Platform and WinUI 3).
+Study [UnoEdit sample project](https://github.com/lextudio/UnoEdit) to see how to use UnoPropertyGrid in your own applications (Uno Platform and WinUI 3).
 
 ## Current Status
 
@@ -31,7 +31,10 @@ TODO
 
 ## TODO Items Before v1.0.0
 
+- [ ] Publish package to NuGet.org
 - [ ] IME support improvements (currently functional but not fully polished)
 - [ ] Accessibility support (screen readers, keyboard navigation, etc.)
 
 ## Credits & Third-Party
+
+TODO
