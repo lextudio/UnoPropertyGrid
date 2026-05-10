@@ -63,13 +63,25 @@
                   ItemsSource="{x:Bind FontWeights, Mode=OneWay}"
                   SelectedItem="{x:Bind FontWeightValue, Mode=TwoWay}"
                   HorizontalAlignment="Stretch"
-                  Visibility="{x:Bind FontWeightEditorVisibility, Mode=OneWay}" />
+                  Visibility="{x:Bind FontWeightEditorVisibility, Mode=OneWay}">
+            <ComboBox.ItemTemplate>
+                <DataTemplate>
+                    <TextBlock Text="{Binding}" FontWeight="{Binding}" TextTrimming="CharacterEllipsis" />
+                </DataTemplate>
+            </ComboBox.ItemTemplate>
+        </ComboBox>
 
         <ComboBox x:Name="FontStyleEditor"
                   ItemsSource="{x:Bind FontStyles, Mode=OneWay}"
                   SelectedItem="{x:Bind FontStyleValue, Mode=TwoWay}"
                   HorizontalAlignment="Stretch"
-                  Visibility="{x:Bind FontStyleEditorVisibility, Mode=OneWay}" />
+                  Visibility="{x:Bind FontStyleEditorVisibility, Mode=OneWay}">
+            <ComboBox.ItemTemplate>
+                <DataTemplate>
+                    <TextBlock Text="{Binding}" FontStyle="{Binding}" TextTrimming="CharacterEllipsis" />
+                </DataTemplate>
+            </ComboBox.ItemTemplate>
+        </ComboBox>
 
         <ComboBox x:Name="FontStretchEditor"
                   ItemsSource="{x:Bind FontStretches, Mode=OneWay}"

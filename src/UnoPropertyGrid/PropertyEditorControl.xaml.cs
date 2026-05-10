@@ -1,4 +1,6 @@
 using System.ComponentModel;
+using System.Runtime.InteropServices;
+using System.Linq;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
@@ -20,6 +22,7 @@ public sealed partial class PropertyEditorControl : UserControl, INotifyProperty
     public PropertyEditorControl()
     {
         InitializeComponent();
+        _fontFamilies = LoadSystemFontFamilies() ?? s_defaultFontFamilies;
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
@@ -115,7 +118,27 @@ public sealed partial class PropertyEditorControl : UserControl, INotifyProperty
 
     public IReadOnlyList<object> EnumValues => ViewModel?.EnumValues ?? Array.Empty<object>();
     public IReadOnlyList<string> CommonBrushes { get; } = new[] { "No brush", "Transparent", "Black", "White", "Gray", "Red", "Green", "Blue", "Yellow" };
-    public IReadOnlyList<string> FontFamilies { get; } = new[] { "Segoe UI", "Arial", "Calibri", "Cambria", "Consolas", "Courier New", "Georgia", "Tahoma", "Times New Roman", "Verdana" };
+    static readonly IReadOnlyList<string> s_defaultFontFamilies = new[]
+    {
+        // Prefer common monospaced fonts across platforms
+        "Consolas",
+        "Menlo",
+        "DejaVu Sans Mono",
+        "Liberation Mono",
+        "Monospace",
+        "Courier New",
+        "Courier",
+        // Fallback UI fonts
+        "Segoe UI",
+        "Arial",
+        "Calibri",
+        "Georgia",
+        "Tahoma",
+        "Verdana",
+        "Times New Roman"
+    };
+    readonly IReadOnlyList<string> _fontFamilies;
+    public IReadOnlyList<string> FontFamilies => _fontFamilies;
     public IReadOnlyList<string> FontWeights { get; } = new[] { "Thin", "ExtraLight", "Light", "Normal", "Medium", "SemiBold", "Bold", "ExtraBold", "Black" };
     public IReadOnlyList<object> FontStyles { get; } = Enum.GetValues(typeof(FontStyle)).Cast<object>().ToArray();
     public IReadOnlyList<object> FontStretches { get; } = Enum.GetValues(typeof(FontStretch)).Cast<object>().ToArray();
@@ -129,9 +152,18 @@ public sealed partial class PropertyEditorControl : UserControl, INotifyProperty
 
     public Brush BrushPreview => ViewModel?.BrushPreview ?? new SolidColorBrush(Microsoft.UI.Colors.Transparent);
 
+    static string GetPlatformDefaultFontFamilyName()
+    {
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+            return "Menlo";
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            return "DejaVu Sans Mono";
+        return "Consolas";
+    }
+
     public string FontFamilyValue
     {
-        get => ViewModel?.FontFamilyValue ?? "Segoe UI";
+        get => ViewModel?.FontFamilyValue ?? GetPlatformDefaultFontFamilyName();
         set => SetFromEditor(() => { if (ViewModel != null) ViewModel.FontFamilyValue = value; });
     }
 
@@ -198,6 +230,88 @@ public sealed partial class PropertyEditorControl : UserControl, INotifyProperty
         finally
         {
             _updatingFromEditor = false;
+        }
+    }
+
+    IReadOnlyList<string>? LoadSystemFontFamilies()
+    {
+        // Try SkiaSharp first (cross-platform and usually available in Uno apps)
+        try
+        {
+            var skType = Type.GetType("SkiaSharp.SKFontManager, SkiaSharp") ?? Type.GetType("SkiaSharp.SKFontManager");
+            if (skType != null)
+            {
+                var defaultProp = skType.GetProperty("Default", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
+                var mgr = defaultProp?.GetValue(null);
+                if (mgr != null)
+                {
+                    // Try method GetFontFamilies()
+                    var getMethod = skType.GetMethod("GetFontFamilies", Type.EmptyTypes);
+                    object? familiesObj = null;
+                    if (getMethod != null)
+                    {
+                        familiesObj = getMethod.Invoke(mgr, null);
+                    }
+                    else
+                    {
+                        // Fallback to property FontFamilies
+                        var famProp = skType.GetProperty("FontFamilies");
+                        familiesObj = famProp?.GetValue(mgr);
+                    }
+
+                    if (familiesObj is System.Collections.IEnumerable enumFamilies)
+                    {
+                        var list = new List<string>();
+                        foreach (var f in enumFamilies)
+                        {
+                            if (f is string s && !string.IsNullOrWhiteSpace(s) && !list.Contains(s))
+                                list.Add(s);
+                        }
+                        if (list.Count > 0)
+                        {
+                            list.Sort(StringComparer.OrdinalIgnoreCase);
+                            return list;
+                        }
+                    }
+                }
+            }
+        }
+        catch
+        {
+            // ignore and try other fallbacks
+        }
+
+        // Next try System.Drawing's InstalledFontCollection via reflection
+        try
+        {
+            var type = Type.GetType("System.Drawing.Text.InstalledFontCollection, System.Drawing.Common")
+                       ?? Type.GetType("System.Drawing.Text.InstalledFontCollection");
+            if (type == null)
+                return null;
+
+            var instance = Activator.CreateInstance(type);
+            var familiesProp = type.GetProperty("Families");
+            if (familiesProp?.GetValue(instance) is not Array families)
+                return null;
+
+            var list = new List<string>();
+            foreach (var fam in families)
+            {
+                var nameProp = fam.GetType().GetProperty("Name");
+                var name = nameProp?.GetValue(fam) as string;
+                if (!string.IsNullOrWhiteSpace(name) && !list.Contains(name))
+                    list.Add(name!);
+            }
+
+            if (list.Count == 0)
+                return null;
+
+            list.Sort(StringComparer.OrdinalIgnoreCase);
+            return list;
+        }
+        catch
+        {
+            return null;
         }
     }
 

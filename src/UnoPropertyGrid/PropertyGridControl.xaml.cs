@@ -464,7 +464,14 @@ public sealed partial class PropertyGridControl : UserControl, INotifyPropertyCh
         row.Children.Add(editorBorder);
 
         row.Children.Add(CreateIndicatorCell(2, property));
-        return row;
+        var outer = new Border
+        {
+            BorderBrush = _borderBrush,
+            BorderThickness = new Thickness(0, 0, 0, 1),
+            Background = _backgroundBrush,
+            Child = row
+        };
+        return outer;
     }
 
     FrameworkElement CreateEventRow(PropertyGridEventViewModel @event)
@@ -482,7 +489,14 @@ public sealed partial class PropertyGridControl : UserControl, INotifyPropertyCh
         textBox.TextChanged += (_, _) => @event.HandlerName = textBox.Text;
         Grid.SetColumn(textBox, 1);
         row.Children.Add(textBox);
-        return row;
+        var outer = new Border
+        {
+            BorderBrush = _borderBrush,
+            BorderThickness = new Thickness(0, 0, 0, 1),
+            Background = _backgroundBrush,
+            Child = row
+        };
+        return outer;
     }
 
     Grid CreateRowGrid(bool includeIndicatorColumn = true)
@@ -550,7 +564,7 @@ public sealed partial class PropertyGridControl : UserControl, INotifyPropertyCh
         var border = new Border
         {
             BorderBrush = _borderBrush,
-            BorderThickness = new Thickness(0, 0, 0, 1)
+            BorderThickness = new Thickness(0)
         };
         Grid.SetColumn(border, column);
         return border;
@@ -588,7 +602,7 @@ public sealed partial class PropertyGridControl : UserControl, INotifyPropertyCh
 
         RootControl.Background = _backgroundBrush;
         HeaderPanel.Background = _panelBrush;
-        ArrangeByPanel.Background = _backgroundBrush;
+        ArrangeByPanel.Background = _panelBrush;
         ObjectGlyph.Foreground = _mutedForegroundBrush;
         NameLabel.Foreground = _foregroundBrush;
         TypeLabel.Foreground = _foregroundBrush;

@@ -11,7 +11,7 @@ public sealed class PropertyGridCategoryViewModel : INotifyPropertyChanged
 
     public PropertyGridCategoryViewModel(string name)
     {
-        Name = string.IsNullOrWhiteSpace(name) ? "Misc" : name;
+        Name = string.IsNullOrWhiteSpace(name) ? "Miscellaneous" : name;
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;

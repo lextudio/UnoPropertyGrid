@@ -40,52 +40,57 @@
             </ResourceDictionary.ThemeDictionaries>
 
             <DataTemplate x:Key="PropertyTemplate">
-                <Grid
-                    MinHeight="24"
-                    Background="{ThemeResource PropertyGridBackgroundBrush}"
-                    ColumnSpacing="0">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="{Binding ElementName=RootControl, Path=NameColumnWidth}" />
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="14" />
-                    </Grid.ColumnDefinitions>
+                <Border
+                    BorderBrush="{ThemeResource PropertyGridBorderBrush}"
+                    BorderThickness="0,0,0,1"
+                    Background="{ThemeResource PropertyGridCellBrush}">
+                    <Grid
+                        MinHeight="24"
+                        Background="{ThemeResource PropertyGridCellBrush}"
+                        ColumnSpacing="0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="{Binding ElementName=RootControl, Path=NameColumnWidth}" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="14" />
+                        </Grid.ColumnDefinitions>
 
-                    <Border
-                        Padding="20,2,4,2"
-                        BorderBrush="{ThemeResource PropertyGridBorderBrush}"
-                        BorderThickness="0,0,0,1">
-                        <TextBlock
-                            VerticalAlignment="Center"
-                            FontSize="12"
-                            Foreground="{ThemeResource PropertyGridForegroundBrush}"
-                            Text="{Binding DisplayName}"
-                            TextTrimming="CharacterEllipsis" />
-                    </Border>
+                        <Border
+                            Padding="20,2,4,2"
+                            BorderBrush="{ThemeResource PropertyGridBorderBrush}"
+                            BorderThickness="0">
+                            <TextBlock
+                                VerticalAlignment="Center"
+                                FontSize="12"
+                                Foreground="{ThemeResource PropertyGridForegroundBrush}"
+                                Text="{Binding DisplayName}"
+                                TextTrimming="CharacterEllipsis" />
+                        </Border>
 
-                    <Border
-                        Grid.Column="1"
-                        Padding="4,1"
-                        BorderBrush="{ThemeResource PropertyGridBorderBrush}"
-                        BorderThickness="0,0,0,1">
-                        <local:PropertyEditorControl ViewModel="{Binding}" />
-                    </Border>
+                        <Border
+                            Grid.Column="1"
+                            Padding="4,1"
+                            BorderBrush="{ThemeResource PropertyGridBorderBrush}"
+                            BorderThickness="0">
+                            <local:PropertyEditorControl ViewModel="{Binding}" />
+                        </Border>
 
-                    <Border
-                        Grid.Column="2"
-                        Padding="3,0"
-                        BorderBrush="{ThemeResource PropertyGridBorderBrush}"
-                        BorderThickness="0,0,0,1"
-                        ToolTipService.ToolTip="Default or overridden value indicator">
-                        <Rectangle
-                            Width="6"
-                            Height="6"
-                            HorizontalAlignment="Center"
-                            VerticalAlignment="Center"
-                            Fill="Transparent"
-                            Stroke="{ThemeResource PropertyGridMutedForegroundBrush}"
-                            StrokeThickness="1" />
-                    </Border>
-                </Grid>
+                        <Border
+                            Grid.Column="2"
+                            Padding="3,0"
+                            BorderBrush="{ThemeResource PropertyGridBorderBrush}"
+                            BorderThickness="0"
+                            ToolTipService.ToolTip="Default or overridden value indicator">
+                            <Rectangle
+                                Width="6"
+                                Height="6"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                Fill="Transparent"
+                                Stroke="{ThemeResource PropertyGridMutedForegroundBrush}"
+                                StrokeThickness="1" />
+                        </Border>
+                    </Grid>
+                </Border>
             </DataTemplate>
 
             <DataTemplate x:Key="CategoryTemplate">
@@ -239,7 +244,7 @@
                     Checked="OnViewModeChecked"
                     IsChecked="True"
                     ToolTipService.ToolTip="Properties">
-                    <FontIcon FontSize="13" Glyph="&#xE713;" />
+                    <FontIcon FontSize="13" Glyph="&#xE7F4;" />
                 </ToggleButton>
                 <ToggleButton
                     x:Name="EventsButton"
@@ -272,7 +277,7 @@
                 TextTrimming="CharacterEllipsis" />
         </Grid>
 
-        <Grid Grid.Row="1" Margin="8,4,8,3">
+        <Grid Grid.Row="1" Margin="8,4,8,3" Background="{ThemeResource PropertyGridPanelBrush}">
             <TextBox
                 x:Name="SearchBox"
                 MinHeight="24"
@@ -294,7 +299,7 @@
             x:Name="ArrangeByPanel"
             Grid.Row="2"
             Padding="8,0,8,4"
-            Background="{ThemeResource PropertyGridBackgroundBrush}"
+            Background="{ThemeResource PropertyGridPanelBrush}"
             Orientation="Horizontal"
             Spacing="2">
             <TextBlock

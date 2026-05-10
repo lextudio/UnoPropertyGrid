@@ -41,7 +41,7 @@ public sealed class PropertyGridPropertyDescriptor
             ? descriptorCategory
             : _property?.GetCustomAttribute<CategoryAttribute>()?.Category is { Length: > 0 } cat
                 ? cat
-                : "Misc";
+                : "Miscellaneous";
 
     public string Description =>
         _descriptor?.Description is { Length: > 0 } descriptorDescription
