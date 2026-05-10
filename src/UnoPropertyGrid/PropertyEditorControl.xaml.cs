@@ -23,6 +23,8 @@ public sealed partial class PropertyEditorControl : UserControl, INotifyProperty
     {
         InitializeComponent();
         _fontFamilies = LoadSystemFontFamilies() ?? s_defaultFontFamilies;
+        Loaded += (_, _) => ApplyThemeResources();
+        ActualThemeChanged += (_, _) => ApplyThemeResources();
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
@@ -218,6 +220,101 @@ public sealed partial class PropertyEditorControl : UserControl, INotifyProperty
             var baseType = Nullable.GetUnderlyingType(ViewModel.PropertyType) ?? ViewModel.PropertyType;
             return baseType == typeof(bool) ? Visibility.Visible : Visibility.Collapsed;
         }
+    }
+
+    void ApplyThemeResources()
+    {
+        var isLight = ActualTheme == ElementTheme.Light;
+        var background = new SolidColorBrush(isLight
+            ? Microsoft.UI.ColorHelper.FromArgb(255, 243, 243, 243)
+            : Microsoft.UI.ColorHelper.FromArgb(255, 30, 30, 30));
+        var pointerBackground = new SolidColorBrush(isLight
+            ? Microsoft.UI.ColorHelper.FromArgb(255, 243, 243, 243)
+            : Microsoft.UI.ColorHelper.FromArgb(255, 37, 37, 38));
+        var border = new SolidColorBrush(isLight
+            ? Microsoft.UI.ColorHelper.FromArgb(255, 208, 208, 208)
+            : Microsoft.UI.ColorHelper.FromArgb(255, 63, 63, 70));
+        var borderPointerOver = new SolidColorBrush(isLight
+            ? Microsoft.UI.ColorHelper.FromArgb(255, 168, 168, 168)
+            : Microsoft.UI.ColorHelper.FromArgb(255, 110, 110, 120));
+        var foreground = new SolidColorBrush(isLight
+            ? Microsoft.UI.ColorHelper.FromArgb(255, 30, 30, 30)
+            : Microsoft.UI.ColorHelper.FromArgb(255, 241, 241, 241));
+        var mutedForeground = new SolidColorBrush(isLight
+            ? Microsoft.UI.ColorHelper.FromArgb(255, 95, 95, 95)
+            : Microsoft.UI.ColorHelper.FromArgb(255, 200, 200, 200));
+        var accent = new SolidColorBrush(Microsoft.UI.ColorHelper.FromArgb(255, 0, 122, 204));
+
+        Resources["TextControlBackground"] = background;
+        Resources["TextControlBackgroundPointerOver"] = pointerBackground;
+        Resources["TextControlBackgroundFocused"] = background;
+        Resources["TextControlForeground"] = foreground;
+        Resources["TextControlForegroundFocused"] = foreground;
+        Resources["TextControlPlaceholderForeground"] = mutedForeground;
+        Resources["TextControlBorderBrush"] = border;
+        Resources["TextControlBorderBrushPointerOver"] = borderPointerOver;
+        Resources["TextControlBorderBrushFocused"] = accent;
+
+        Resources["ComboBoxBackground"] = background;
+        Resources["ComboBoxBackgroundPointerOver"] = pointerBackground;
+        Resources["ComboBoxBackgroundPressed"] = pointerBackground;
+        Resources["ComboBoxForeground"] = foreground;
+        Resources["ComboBoxForegroundPointerOver"] = foreground;
+        Resources["ComboBoxForegroundPressed"] = foreground;
+        Resources["ComboBoxBorderBrush"] = border;
+        Resources["ComboBoxBorderBrushPointerOver"] = borderPointerOver;
+        Resources["ComboBoxBorderBrushPressed"] = accent;
+        Resources["ComboBoxDropDownGlyphForeground"] = foreground;
+        Resources["ComboBoxDropDownGlyphForegroundPointerOver"] = foreground;
+        Resources["ComboBoxDropDownGlyphForegroundPressed"] = foreground;
+
+        Resources["CheckBoxCheckBackgroundStrokeUnchecked"] = mutedForeground;
+        Resources["CheckBoxCheckBackgroundStrokeUncheckedPointerOver"] = foreground;
+        Resources["CheckBoxCheckBackgroundStrokeUncheckedPressed"] = mutedForeground;
+        Resources["CheckBoxCheckBackgroundFillUnchecked"] = background;
+        Resources["CheckBoxCheckBackgroundFillUncheckedPointerOver"] = pointerBackground;
+        Resources["CheckBoxCheckBackgroundStrokeChecked"] = accent;
+        Resources["CheckBoxCheckBackgroundStrokeCheckedPointerOver"] = accent;
+        Resources["CheckBoxCheckBackgroundStrokeCheckedPressed"] = accent;
+
+        foreach (var textBox in new[] { TextEditor, NumberEditor })
+            ApplyTextBoxTheme(textBox, foreground, background, border);
+
+        foreach (var comboBox in new[] { EnumEditor, BrushEditor, FontFamilyEditor, FontWeightEditor, FontStyleEditor, FontStretchEditor })
+            ApplyComboBoxTheme(comboBox, foreground, background, border);
+
+        ApplyCheckBoxTheme(BooleanEditor, foreground, background, mutedForeground, accent);
+        ApplyCheckBoxTheme(ReadOnlyBooleanEditor, foreground, background, mutedForeground, accent);
+        ReadOnlyEditor.Foreground = foreground;
+    }
+
+    static void ApplyTextBoxTheme(TextBox textBox, Brush foreground, Brush background, Brush border)
+    {
+        textBox.Foreground = foreground;
+        textBox.Background = background;
+        textBox.BorderBrush = border;
+    }
+
+    static void ApplyComboBoxTheme(ComboBox comboBox, Brush foreground, Brush background, Brush border)
+    {
+        comboBox.Foreground = foreground;
+        comboBox.Background = background;
+        comboBox.BorderBrush = border;
+    }
+
+    static void ApplyCheckBoxTheme(CheckBox checkBox, Brush foreground, Brush background, Brush border, Brush accent)
+    {
+        checkBox.Foreground = foreground;
+        checkBox.Background = background;
+        checkBox.BorderBrush = border;
+        checkBox.Resources["CheckBoxCheckBackgroundStrokeUnchecked"] = border;
+        checkBox.Resources["CheckBoxCheckBackgroundStrokeUncheckedPointerOver"] = foreground;
+        checkBox.Resources["CheckBoxCheckBackgroundStrokeUncheckedPressed"] = border;
+        checkBox.Resources["CheckBoxCheckBackgroundFillUnchecked"] = background;
+        checkBox.Resources["CheckBoxCheckBackgroundFillUncheckedPointerOver"] = background;
+        checkBox.Resources["CheckBoxCheckBackgroundStrokeChecked"] = accent;
+        checkBox.Resources["CheckBoxCheckBackgroundStrokeCheckedPointerOver"] = accent;
+        checkBox.Resources["CheckBoxCheckBackgroundStrokeCheckedPressed"] = accent;
     }
 
     void SetFromEditor(Action update)

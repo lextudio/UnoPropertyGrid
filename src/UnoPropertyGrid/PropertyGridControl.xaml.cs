@@ -346,8 +346,8 @@ public sealed partial class PropertyGridControl : UserControl, INotifyPropertyCh
     void BuildCategorizedRows()
     {
         CategorizedRowsPanel.Children.Clear();
-        foreach (var category in _categories)
-            CategorizedRowsPanel.Children.Add(CreateCategoryHeader(category));
+        for (var i = 0; i < _categories.Count; i++)
+            CategorizedRowsPanel.Children.Add(CreateCategoryHeader(_categories[i], i == 0));
         _categorizedRowsDirty = false;
     }
 
@@ -367,7 +367,7 @@ public sealed partial class PropertyGridControl : UserControl, INotifyPropertyCh
         _eventRowsDirty = false;
     }
 
-    FrameworkElement CreateCategoryHeader(PropertyGridCategoryViewModel category)
+    FrameworkElement CreateCategoryHeader(PropertyGridCategoryViewModel category, bool drawTopSeparator)
     {
         var container = new StackPanel();
         var childrenPanel = new StackPanel
@@ -378,10 +378,17 @@ public sealed partial class PropertyGridControl : UserControl, INotifyPropertyCh
         container.Children.Add(CreateCategoryToggle(category, childrenPanel));
 
         foreach (var property in category.Rows)
-            childrenPanel.Children.Add(CreatePropertyRow(property));
+            childrenPanel.Children.Add(CreatePropertyRow(property, drawSeparator: false));
 
         container.Children.Add(childrenPanel);
-        return container;
+        return new Border
+        {
+            BorderBrush = _borderBrush,
+            BorderThickness = drawTopSeparator
+                ? new Thickness(0, 1, 0, 1)
+                : new Thickness(0, 0, 0, 1),
+            Child = container
+        };
     }
 
     Button CreateCategoryToggle(PropertyGridCategoryViewModel category, StackPanel childrenPanel)
@@ -392,7 +399,7 @@ public sealed partial class PropertyGridControl : UserControl, INotifyPropertyCh
             HorizontalContentAlignment = HorizontalAlignment.Stretch,
             Background = _categoryBrush,
             BorderBrush = _borderBrush,
-            BorderThickness = new Thickness(0, 0, 0, 1),
+            BorderThickness = new Thickness(0),
             Padding = new Thickness(0),
             MinHeight = 24,
             Content = CreateCategoryHeaderContent(category),
@@ -453,7 +460,7 @@ public sealed partial class PropertyGridControl : UserControl, INotifyPropertyCh
         childrenPanel.Visibility = isExpanded ? Visibility.Visible : Visibility.Collapsed;
     }
 
-    FrameworkElement CreatePropertyRow(PropertyGridPropertyViewModel property)
+    FrameworkElement CreatePropertyRow(PropertyGridPropertyViewModel property, bool drawSeparator = true)
     {
         var row = CreateRowGrid();
         row.Children.Add(CreateNameCell(property.DisplayName));
@@ -467,7 +474,7 @@ public sealed partial class PropertyGridControl : UserControl, INotifyPropertyCh
         var outer = new Border
         {
             BorderBrush = _borderBrush,
-            BorderThickness = new Thickness(0, 0, 0, 1),
+            BorderThickness = drawSeparator ? new Thickness(0, 0, 0, 1) : new Thickness(0),
             Background = _backgroundBrush,
             Child = row
         };
@@ -484,15 +491,19 @@ public sealed partial class PropertyGridControl : UserControl, INotifyPropertyCh
             Text = @event.HandlerName,
             FontSize = 12,
             Padding = new Thickness(4, 2, 4, 2),
-            MinHeight = 24
+            MinHeight = 24,
+            Foreground = _foregroundBrush,
+            Background = _backgroundBrush,
+            BorderBrush = _borderBrush
         };
+        ApplyTextControlResources(textBox);
         textBox.TextChanged += (_, _) => @event.HandlerName = textBox.Text;
         Grid.SetColumn(textBox, 1);
         row.Children.Add(textBox);
         var outer = new Border
         {
             BorderBrush = _borderBrush,
-            BorderThickness = new Thickness(0, 0, 0, 1),
+            BorderThickness = new Thickness(0),
             Background = _backgroundBrush,
             Child = row
         };
@@ -579,8 +590,8 @@ public sealed partial class PropertyGridControl : UserControl, INotifyPropertyCh
         if (theme == ElementTheme.Light)
         {
             _backgroundBrush = new SolidColorBrush(Color.FromArgb(255, 243, 243, 243));
-            _panelBrush = new SolidColorBrush(Colors.White);
-            _categoryBrush = new SolidColorBrush(Color.FromArgb(255, 232, 232, 232));
+            _panelBrush = new SolidColorBrush(Color.FromArgb(255, 243, 243, 243));
+            _categoryBrush = new SolidColorBrush(Color.FromArgb(255, 243, 243, 243));
             _borderBrush = new SolidColorBrush(Color.FromArgb(255, 208, 208, 208));
             _foregroundBrush = new SolidColorBrush(Color.FromArgb(255, 30, 30, 30));
             _mutedForegroundBrush = new SolidColorBrush(Color.FromArgb(255, 95, 95, 95));
@@ -589,8 +600,8 @@ public sealed partial class PropertyGridControl : UserControl, INotifyPropertyCh
         else
         {
             _backgroundBrush = new SolidColorBrush(Color.FromArgb(255, 30, 30, 30));
-            _panelBrush = new SolidColorBrush(Color.FromArgb(255, 37, 37, 38));
-            _categoryBrush = new SolidColorBrush(Color.FromArgb(255, 37, 37, 38));
+            _panelBrush = new SolidColorBrush(Color.FromArgb(255, 30, 30, 30));
+            _categoryBrush = new SolidColorBrush(Color.FromArgb(255, 30, 30, 30));
             _borderBrush = new SolidColorBrush(Color.FromArgb(255, 63, 63, 70));
             _foregroundBrush = new SolidColorBrush(Color.FromArgb(255, 241, 241, 241));
             _mutedForegroundBrush = new SolidColorBrush(Color.FromArgb(255, 200, 200, 200));
@@ -608,6 +619,48 @@ public sealed partial class PropertyGridControl : UserControl, INotifyPropertyCh
         TypeLabel.Foreground = _foregroundBrush;
         ObjectTypeTextBlock.Foreground = _foregroundBrush;
         SearchGlyph.Foreground = _mutedForegroundBrush;
+        SearchBox.Foreground = _foregroundBrush;
+        SearchBox.Background = _backgroundBrush;
+        SearchBox.BorderBrush = _borderBrush;
+        ApplyTextControlResources(SearchBox);
+        ObjectNameBox.Foreground = _foregroundBrush;
+        ObjectNameBox.Background = _backgroundBrush;
+        ObjectNameBox.BorderBrush = _borderBrush;
+        ApplyTextControlResources(ObjectNameBox);
+        ArrangeByLabel.Foreground = _foregroundBrush;
+        ArrangeByComboBox.Foreground = _foregroundBrush;
+        ArrangeByComboBox.Background = _backgroundBrush;
+        ArrangeByComboBox.BorderBrush = _borderBrush;
+        ApplyComboBoxResources(ArrangeByComboBox);
+    }
+
+    void ApplyTextControlResources(Control control)
+    {
+        control.Resources["TextControlBackground"] = _backgroundBrush;
+        control.Resources["TextControlBackgroundPointerOver"] = _panelBrush;
+        control.Resources["TextControlBackgroundFocused"] = _backgroundBrush;
+        control.Resources["TextControlForeground"] = _foregroundBrush;
+        control.Resources["TextControlForegroundFocused"] = _foregroundBrush;
+        control.Resources["TextControlPlaceholderForeground"] = _mutedForegroundBrush;
+        control.Resources["TextControlBorderBrush"] = _borderBrush;
+        control.Resources["TextControlBorderBrushPointerOver"] = _mutedForegroundBrush;
+        control.Resources["TextControlBorderBrushFocused"] = _overrideIndicatorBrush;
+    }
+
+    void ApplyComboBoxResources(ComboBox comboBox)
+    {
+        comboBox.Resources["ComboBoxBackground"] = _backgroundBrush;
+        comboBox.Resources["ComboBoxBackgroundPointerOver"] = _panelBrush;
+        comboBox.Resources["ComboBoxBackgroundPressed"] = _panelBrush;
+        comboBox.Resources["ComboBoxForeground"] = _foregroundBrush;
+        comboBox.Resources["ComboBoxForegroundPointerOver"] = _foregroundBrush;
+        comboBox.Resources["ComboBoxForegroundPressed"] = _foregroundBrush;
+        comboBox.Resources["ComboBoxBorderBrush"] = _borderBrush;
+        comboBox.Resources["ComboBoxBorderBrushPointerOver"] = _mutedForegroundBrush;
+        comboBox.Resources["ComboBoxBorderBrushPressed"] = _overrideIndicatorBrush;
+        comboBox.Resources["ComboBoxDropDownGlyphForeground"] = _foregroundBrush;
+        comboBox.Resources["ComboBoxDropDownGlyphForegroundPointerOver"] = _foregroundBrush;
+        comboBox.Resources["ComboBoxDropDownGlyphForegroundPressed"] = _foregroundBrush;
     }
 
     void OnViewModeChecked(object sender, RoutedEventArgs e)

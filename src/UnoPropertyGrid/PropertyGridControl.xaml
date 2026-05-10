@@ -6,38 +6,9 @@
 
     <UserControl.Resources>
         <ResourceDictionary>
-            <ResourceDictionary.ThemeDictionaries>
-                <ResourceDictionary x:Key="Light">
-                    <SolidColorBrush x:Key="PropertyGridBackgroundBrush" Color="#F3F3F3" />
-                    <SolidColorBrush x:Key="PropertyGridPanelBrush" Color="#FFFFFF" />
-                    <SolidColorBrush x:Key="PropertyGridCellBrush" Color="#FFFFFF" />
-                    <SolidColorBrush x:Key="PropertyGridCategoryBrush" Color="#E8E8E8" />
-                    <SolidColorBrush x:Key="PropertyGridBorderBrush" Color="#D0D0D0" />
-                    <SolidColorBrush x:Key="PropertyGridForegroundBrush" Color="#1E1E1E" />
-                    <SolidColorBrush x:Key="PropertyGridMutedForegroundBrush" Color="#5F5F5F" />
-                    <SolidColorBrush x:Key="PropertyGridAccentBrush" Color="#007ACC" />
-                </ResourceDictionary>
-                <ResourceDictionary x:Key="Dark">
-                    <SolidColorBrush x:Key="PropertyGridBackgroundBrush" Color="#1E1E1E" />
-                    <SolidColorBrush x:Key="PropertyGridPanelBrush" Color="#252526" />
-                    <SolidColorBrush x:Key="PropertyGridCellBrush" Color="#2D2D30" />
-                    <SolidColorBrush x:Key="PropertyGridCategoryBrush" Color="#252526" />
-                    <SolidColorBrush x:Key="PropertyGridBorderBrush" Color="#3F3F46" />
-                    <SolidColorBrush x:Key="PropertyGridForegroundBrush" Color="#F1F1F1" />
-                    <SolidColorBrush x:Key="PropertyGridMutedForegroundBrush" Color="#C8C8C8" />
-                    <SolidColorBrush x:Key="PropertyGridAccentBrush" Color="#007ACC" />
-                </ResourceDictionary>
-                <ResourceDictionary x:Key="Default">
-                    <SolidColorBrush x:Key="PropertyGridBackgroundBrush" Color="#1E1E1E" />
-                    <SolidColorBrush x:Key="PropertyGridPanelBrush" Color="#252526" />
-                    <SolidColorBrush x:Key="PropertyGridCellBrush" Color="#2D2D30" />
-                    <SolidColorBrush x:Key="PropertyGridCategoryBrush" Color="#252526" />
-                    <SolidColorBrush x:Key="PropertyGridBorderBrush" Color="#3F3F46" />
-                    <SolidColorBrush x:Key="PropertyGridForegroundBrush" Color="#F1F1F1" />
-                    <SolidColorBrush x:Key="PropertyGridMutedForegroundBrush" Color="#C8C8C8" />
-                    <SolidColorBrush x:Key="PropertyGridAccentBrush" Color="#007ACC" />
-                </ResourceDictionary>
-            </ResourceDictionary.ThemeDictionaries>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="PropertyGridThemeResources.xaml" />
+            </ResourceDictionary.MergedDictionaries>
 
             <DataTemplate x:Key="PropertyTemplate">
                 <Border
@@ -228,7 +199,10 @@
                 Grid.Column="2"
                 MinHeight="22"
                 Padding="4,2"
+                Background="{ThemeResource PropertyGridCellBrush}"
+                BorderBrush="{ThemeResource PropertyGridBorderBrush}"
                 FontSize="12"
+                Foreground="{ThemeResource PropertyGridForegroundBrush}"
                 IsReadOnly="True"
                 Text="{x:Bind ObjectName, Mode=OneWay}" />
 
@@ -282,7 +256,10 @@
                 x:Name="SearchBox"
                 MinHeight="24"
                 Padding="4,2,28,2"
+                Background="{ThemeResource PropertyGridCellBrush}"
+                BorderBrush="{ThemeResource PropertyGridBorderBrush}"
                 FontSize="12"
+                Foreground="{ThemeResource PropertyGridForegroundBrush}"
                 PlaceholderText="Search"
                 TextChanged="OnSearchTextChanged" />
             <FontIcon
@@ -303,6 +280,7 @@
             Orientation="Horizontal"
             Spacing="2">
             <TextBlock
+                x:Name="ArrangeByLabel"
                 VerticalAlignment="Center"
                 FontSize="12"
                 Foreground="{ThemeResource PropertyGridForegroundBrush}"
@@ -311,11 +289,20 @@
                 x:Name="ArrangeByComboBox"
                 MinWidth="86"
                 Padding="2,0"
+                Background="{ThemeResource PropertyGridCellBrush}"
+                BorderBrush="{ThemeResource PropertyGridBorderBrush}"
                 FontSize="12"
+                Foreground="{ThemeResource PropertyGridForegroundBrush}"
                 SelectedIndex="0"
                 SelectionChanged="OnArrangeByChanged">
-                <ComboBoxItem Content="Category" />
-                <ComboBoxItem Content="Name" />
+                <ComboBoxItem
+                    Background="{ThemeResource PropertyGridCellBrush}"
+                    Content="Category"
+                    Foreground="{ThemeResource PropertyGridForegroundBrush}" />
+                <ComboBoxItem
+                    Background="{ThemeResource PropertyGridCellBrush}"
+                    Content="Name"
+                    Foreground="{ThemeResource PropertyGridForegroundBrush}" />
             </ComboBox>
         </StackPanel>
 
