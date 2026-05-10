@@ -37,6 +37,45 @@ function Find-MSBuild {
     throw "MSBuild was not found. Install Visual Studio/MSBuild to pack the WinUI target."
 }
 
+function Resolve-UnoSdkExtrasTasksAssembly([string]$ProjectPath) {
+    $packageRoot = [Environment]::GetEnvironmentVariable("NUGET_PACKAGES", "Process")
+    if (-not $packageRoot) {
+        $packageRoot = [Environment]::GetEnvironmentVariable("NUGET_PACKAGES", "User")
+    }
+    if (-not $packageRoot) {
+        $userProfile = [Environment]::GetFolderPath([Environment+SpecialFolder]::UserProfile)
+        $packageRoot = Join-Path $userProfile ".nuget\packages"
+    }
+
+    $extrasRoot = Join-Path $packageRoot "uno.sdk.extras"
+    if (-not (Test-Path $extrasRoot)) {
+        return $null
+    }
+
+    $assetsPath = Join-Path ([IO.Path]::GetDirectoryName($ProjectPath)) "obj\project.assets.json"
+    if (Test-Path $assetsPath) {
+        $assets = Get-Content -LiteralPath $assetsPath -Raw
+        $match = [regex]::Match($assets, '"Uno\.Sdk\.Extras/(?<version>[^"]+)"')
+        if ($match.Success) {
+            $restoredAssembly = Get-ChildItem -Path (Join-Path $extrasRoot $match.Groups["version"].Value) -Recurse -Filter "Uno.Sdk.Extras_*.dll" -ErrorAction SilentlyContinue |
+                Select-Object -First 1
+            if ($restoredAssembly) {
+                return $restoredAssembly.FullName
+            }
+        }
+    }
+
+    $assembly = Get-ChildItem -Path $extrasRoot -Recurse -Filter "Uno.Sdk.Extras_*.dll" -ErrorAction SilentlyContinue |
+        Sort-Object FullName -Descending |
+        Select-Object -First 1
+
+    if ($assembly) {
+        return $assembly.FullName
+    }
+
+    return $null
+}
+
 function Resolve-ProjectPath([string]$Project) {
     if (Test-Path $Project) {
         return (Resolve-Path $Project).Path
@@ -131,6 +170,7 @@ function Invoke-PackProject([string]$MSBuild, [string]$ProjectPath) {
     $projectName = [IO.Path]::GetFileNameWithoutExtension($ProjectPath)
     $projectOutput = Join-Path $BuildRoot $projectName
     Reset-Directory $projectOutput
+    $unoSdkExtrasTasksAssembly = Resolve-UnoSdkExtrasTasksAssembly $ProjectPath
 
     $arguments = @(
         $ProjectPath,
@@ -143,10 +183,17 @@ function Invoke-PackProject([string]$MSBuild, [string]$ProjectPath) {
         "/nologo"
     )
 
+    if ($unoSdkExtrasTasksAssembly) {
+        $arguments += "/p:UnoSdkExtrasTasksAssembly=$unoSdkExtrasTasksAssembly"
+    }
+
     Write-Host ""
     Write-Host "Packing $ProjectPath"
     Write-Host "  Output:   $projectOutput"
     Write-Host "  Packages: $PackageStaging"
+    if ($unoSdkExtrasTasksAssembly) {
+        Write-Host "  Uno SDK extras tasks: $unoSdkExtrasTasksAssembly"
+    }
 
     # MSBuild imports environment variables as properties. Clear OutDir so callers
     # cannot accidentally force all target frameworks into one shared folder.
