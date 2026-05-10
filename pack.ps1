@@ -2,9 +2,7 @@ Param(
     [string]$OutDir = ".\dist",
     [string]$Configuration = "Release",
     [string[]]$Projects = @(
-        "src\LeXtudio.Windows\LeXtudio.Windows.csproj",
-        "src\UnoEdit\UnoEdit.csproj",
-        "src\UnoEdit.TextMate\UnoEdit.TextMate.csproj"
+        "src\UnoPropertyGrid\UnoPropertyGrid.csproj"
     )
 )
 
@@ -106,42 +104,21 @@ function Get-TypeDefinitionNames([string]$AssemblyPath) {
     }
 }
 
-function Test-UnoEditPackage([string]$PackagePath) {
-    if ((Split-Path -Leaf $PackagePath) -notmatch "^LeXtudio\.UnoEdit\.\d.*\.nupkg$") {
-        return
-    }
-
+function Test-Package([string]$PackagePath) {
     Add-Type -AssemblyName System.IO.Compression.FileSystem -ErrorAction Stop
 
-    $extractRoot = Join-Path ([IO.Path]::GetTempPath()) "unoedit_pkg_verify_$([Guid]::NewGuid())"
+    $extractRoot = Join-Path ([IO.Path]::GetTempPath()) "pkg_verify_$([Guid]::NewGuid())"
     Reset-Directory $extractRoot
     try {
         [IO.Compression.ZipFile]::ExtractToDirectory($PackagePath, $extractRoot)
-        $desktopAssemblies = @(
-            Get-ChildItem -Path (Join-Path $extractRoot "lib") -Recurse -Filter "UnoEdit.dll" |
-                Where-Object { $_.FullName -match "net[0-9.]+-desktop" }
-        )
 
-        if ($desktopAssemblies.Count -eq 0) {
-            throw "Package '$PackagePath' does not contain a desktop UnoEdit.dll asset."
+        $dlls = Get-ChildItem -Path (Join-Path $extractRoot "lib") -Recurse -Filter "UnoPropertyGrid.dll" -ErrorAction SilentlyContinue
+        if (-not $dlls -or $dlls.Count -eq 0) {
+            throw "Package '$PackagePath' does not contain UnoPropertyGrid.dll asset."
         }
 
-        foreach ($assembly in $desktopAssemblies) {
-            $references = @(Get-AssemblyReferenceNames $assembly.FullName)
-            Write-Host "  Verified desktop asset: $($assembly.FullName)"
-            Write-Host "    References: $($references -join ', ')"
-
-            if ($references -contains "Microsoft.WinUI") {
-                throw "Desktop asset '$($assembly.FullName)' references Microsoft.WinUI. Desktop assets must reference Uno.UI instead."
-            }
-
-            $winUITypes = @(
-                Get-TypeDefinitionNames $assembly.FullName |
-                    Where-Object { $_ -like "UnoEdit.WinUI.Controls.*" }
-            )
-            if ($winUITypes.Count -gt 0) {
-                throw "Desktop asset '$($assembly.FullName)' contains WinUI-only types: $($winUITypes -join ', ')"
-            }
+        foreach ($assembly in $dlls) {
+            Write-Host "  Verified package contains: $($assembly.FullName)"
         }
     } finally {
         if (Test-Path $extractRoot) {
@@ -199,7 +176,7 @@ function Copy-PackagesToOutput([string]$Source, [string]$Destination) {
     Write-Host ""
     Write-Host "Verifying packages"
     foreach ($package in $packages | Where-Object { $_.Extension -eq ".nupkg" }) {
-        Test-UnoEditPackage $package.FullName
+        Test-Package $package.FullName
     }
 
     Write-Host ""

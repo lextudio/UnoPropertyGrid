@@ -1,5 +1,5 @@
 @echo off
-REM dist.all.bat - Pack UnoEdit projects and sign resulting NuGet packages
+REM dist.all.bat - Pack UnoPropertyGrid projects and sign resulting NuGet packages
 REM Ensures ONLY .nupkg files exist in dist folder upon successful completion
 SETLOCAL EnableExtensions EnableDelayedExpansion
 echo on

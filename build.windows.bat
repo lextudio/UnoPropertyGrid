@@ -1,5 +1,5 @@
 @echo off
-rem build.windows.bat - Locate MSBuild via vswhere and build UnoEdit.Windows.slnx
+rem build.windows.bat - Locate MSBuild via vswhere and build UnoPropertyGrid.slnx
 setlocal EnableExtensions EnableDelayedExpansion
 
 echo Locating MSBuild via vswhere/where...
@@ -63,11 +63,11 @@ if defined MSBUILD_PATH (
 
 rem Determine solution path relative to script location
 set "SCRIPT_DIR=%~dp0"
-set "SOLUTION=%SCRIPT_DIR%UnoEdit.Windows.slnx"
+set "SOLUTION=%SCRIPT_DIR%UnoPropertyGrid.slnx"
 if not exist "%SOLUTION%" (
-	set "SOLUTION=UnoEdit.Windows.slnx"
+	set "SOLUTION=UnoPropertyGrid.slnx"
 	if not exist "%SOLUTION%" (
-		echo Solution file UnoEdit.Windows.slnx not found in script folder or cwd.
+		echo Solution file UnoPropertyGrid.slnx not found in script folder or cwd.
 		endlocal & exit /b 1
 	)
 )
