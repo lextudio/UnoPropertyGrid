@@ -42,7 +42,12 @@
                             Padding="4,1"
                             BorderBrush="{ThemeResource PropertyGridBorderBrush}"
                             BorderThickness="0">
-                            <local:PropertyEditorControl ViewModel="{Binding}" />
+                            <TextBlock
+                                VerticalAlignment="Center"
+                                FontSize="12"
+                                Foreground="{ThemeResource PropertyGridForegroundBrush}"
+                                Text="{Binding DisplayValue}"
+                                TextTrimming="CharacterEllipsis" />
                         </Border>
 
                         <Border

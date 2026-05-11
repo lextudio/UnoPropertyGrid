@@ -40,7 +40,6 @@
   <ItemGroup>
     <Compile Include="**\*.cs" Exclude="obj\**\*.cs;bin\**\*.cs" />
     <Page Include="PropertyGridControl.xaml" />
-    <Page Include="PropertyEditorControl.xaml" />
     <Page Include="PropertyGridThemeResources.xaml" />
   </ItemGroup>
   <ItemGroup>

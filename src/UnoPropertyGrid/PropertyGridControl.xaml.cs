@@ -70,6 +70,7 @@ public sealed partial class PropertyGridControl : UserControl, INotifyPropertyCh
     readonly ObservableCollection<PropertyGridEventViewModel> _visibleEvents = new();
     readonly IPropertyGridPropertyProvider _propertyProvider = new TypeDescriptorPropertyProvider();
     readonly IPropertyGridEventProvider _eventProvider = new ReflectionEventProvider();
+    readonly IPropertyGridEditorProvider _builtInEditorProvider = new BuiltInPropertyEditorProvider();
     readonly Dictionary<string, bool> _categoryExpansion = new(StringComparer.Ordinal);
     bool _categorizedRowsDirty = true;
     bool _flatRowsDirty = true;
@@ -483,34 +484,39 @@ public sealed partial class PropertyGridControl : UserControl, INotifyPropertyCh
 
     FrameworkElement CreateEditor(PropertyGridPropertyViewModel property)
     {
+        var context = CreateEditorContext(property);
         foreach (var provider in EditorProviders)
         {
-            var context = new PropertyGridEditorContext
-            {
-                Component = property.Descriptor.Component,
-                Descriptor = property.Descriptor,
-                Value = property.Value,
-                BindingMode = property.IsReadOnly ? Microsoft.UI.Xaml.Data.BindingMode.OneWay : Microsoft.UI.Xaml.Data.BindingMode.TwoWay,
-                Services = null,
-                SetValue = value =>
-                {
-                    property.Value = value;
-                }
-            };
-
             if (!provider.CanEdit(context))
                 continue;
 
-            var editor = provider.CreateEditor(context);
-            property.PropertyChanged += (_, e) =>
-            {
-                if (e.PropertyName == nameof(PropertyGridPropertyViewModel.Value))
-                    context.Value = property.Value;
-            };
-            return editor;
+            return provider.CreateEditor(context);
         }
 
-        return new PropertyEditorControl { ViewModel = property };
+        return _builtInEditorProvider.CreateEditor(context);
+    }
+
+    PropertyGridEditorContext CreateEditorContext(PropertyGridPropertyViewModel property)
+    {
+        var context = new PropertyGridEditorContext
+        {
+            Component = property.Descriptor.Component,
+            Descriptor = property.Descriptor,
+            Value = property.Value,
+            BindingMode = property.IsReadOnly ? Microsoft.UI.Xaml.Data.BindingMode.OneWay : Microsoft.UI.Xaml.Data.BindingMode.TwoWay,
+            Services = null,
+            SetValue = value =>
+            {
+                property.Value = value;
+            }
+        };
+
+        property.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(PropertyGridPropertyViewModel.Value))
+                context.Value = property.Value;
+        };
+        return context;
     }
 
     FrameworkElement CreateEventRow(PropertyGridEventViewModel @event)
