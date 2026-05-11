@@ -34,7 +34,8 @@
                                 FontSize="12"
                                 Foreground="{ThemeResource PropertyGridForegroundBrush}"
                                 Text="{Binding DisplayName}"
-                                TextTrimming="CharacterEllipsis" />
+                                TextTrimming="CharacterEllipsis"
+                                ToolTipService.ToolTip="{Binding DisplayName}" />
                         </Border>
 
                         <Border
@@ -223,7 +224,7 @@
                     Checked="OnViewModeChecked"
                     IsChecked="True"
                     ToolTipService.ToolTip="Properties">
-                    <FontIcon FontSize="13" Glyph="&#xE7F4;" />
+                    <FontIcon FontSize="13" Glyph="&#xE90F;" />
                 </ToggleButton>
                 <ToggleButton
                     x:Name="EventsButton"

@@ -47,7 +47,7 @@ public sealed partial class PropertyGridControl : UserControl, INotifyPropertyCh
             nameof(NameColumnWidth),
             typeof(double),
             typeof(PropertyGridControl),
-            new PropertyMetadata(180d));
+            new PropertyMetadata(220d));
 
     public static readonly DependencyProperty ShowDescriptionPaneProperty =
         DependencyProperty.Register(
