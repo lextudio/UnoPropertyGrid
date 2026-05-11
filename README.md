@@ -2,7 +2,7 @@
 
 UnoPropertyGrid is a desktop-first property grid for [Uno Platform](https://platform.uno) and [WinUI 3](https://learn.microsoft.com/windows/apps/winui/winui3/).
 
-![UnoPropertyGrid on macOS](https://github.com/lextudio/UnoPropertyGrid/blob/master/images/macos.png?raw=true)
+![UnoPropertyGrid on macOS](https://raw.githubusercontent.com/lextudio/UnoPropertyGrid/master/images/macos.png)
 
 Current scope:
 
