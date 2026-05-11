@@ -1,0 +1,27 @@
+<Page
+    x:Class="UnoPropertyGrid.Sample.MainPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:pg="using:UnoPropertyGrid"
+    Background="#F3F3F3">
+
+    <Grid RowSpacing="8" Padding="8">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <ComboBox
+            x:Name="ObjectSelector"
+            MinWidth="260"
+            Header="Selected object"
+            SelectionChanged="ObjectSelector_SelectionChanged" />
+
+        <pg:PropertyGridControl
+            x:Name="PropertyGrid"
+            Grid.Row="1"
+            NameColumnWidth="150"
+            PropertyGridTheme="Light"
+            ShowDescriptionPane="True" />
+    </Grid>
+</Page>

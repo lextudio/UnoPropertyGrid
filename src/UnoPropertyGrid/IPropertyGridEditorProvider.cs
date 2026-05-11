@@ -16,4 +16,5 @@ public sealed class PropertyGridEditorContext
     public object? Value { get; set; }
     public BindingMode BindingMode { get; init; } = BindingMode.TwoWay;
     public IServiceProvider? Services { get; init; }
+    public Action<object?>? SetValue { get; init; }
 }

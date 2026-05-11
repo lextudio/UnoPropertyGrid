@@ -27,6 +27,8 @@ public sealed class PropertyGridPropertyDescriptor
         _descriptor = descriptor ?? throw new ArgumentNullException(nameof(descriptor));
     }
 
+    public object Component => _component;
+
     public string Name => _descriptor?.Name ?? _property!.Name;
 
     public string DisplayName =>

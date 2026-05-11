@@ -467,7 +467,7 @@ public sealed partial class PropertyGridControl : UserControl, INotifyPropertyCh
 
         var editorBorder = CreateCellBorder(1);
         editorBorder.Padding = new Thickness(4, 1, 4, 1);
-        editorBorder.Child = new PropertyEditorControl { ViewModel = property };
+        editorBorder.Child = CreateEditor(property);
         row.Children.Add(editorBorder);
 
         row.Children.Add(CreateIndicatorCell(2, property));
@@ -479,6 +479,38 @@ public sealed partial class PropertyGridControl : UserControl, INotifyPropertyCh
             Child = row
         };
         return outer;
+    }
+
+    FrameworkElement CreateEditor(PropertyGridPropertyViewModel property)
+    {
+        foreach (var provider in EditorProviders)
+        {
+            var context = new PropertyGridEditorContext
+            {
+                Component = property.Descriptor.Component,
+                Descriptor = property.Descriptor,
+                Value = property.Value,
+                BindingMode = property.IsReadOnly ? Microsoft.UI.Xaml.Data.BindingMode.OneWay : Microsoft.UI.Xaml.Data.BindingMode.TwoWay,
+                Services = null,
+                SetValue = value =>
+                {
+                    property.Value = value;
+                }
+            };
+
+            if (!provider.CanEdit(context))
+                continue;
+
+            var editor = provider.CreateEditor(context);
+            property.PropertyChanged += (_, e) =>
+            {
+                if (e.PropertyName == nameof(PropertyGridPropertyViewModel.Value))
+                    context.Value = property.Value;
+            };
+            return editor;
+        }
+
+        return new PropertyEditorControl { ViewModel = property };
     }
 
     FrameworkElement CreateEventRow(PropertyGridEventViewModel @event)

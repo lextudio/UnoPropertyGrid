@@ -27,6 +27,7 @@ public sealed class PropertyGridPropertyViewModel : INotifyPropertyChanged
     public string Category => _property.Category;
     public string Description => _property.Description;
     public Type PropertyType => _property.PropertyType;
+    public PropertyGridPropertyDescriptor Descriptor => _property;
     public bool IsReadOnly => _property.IsReadOnly;
     public bool IsEditable => !IsReadOnly && EditorKind != PropertyEditorKind.ReadOnly;
     public bool IsDefaultValue => ValuesEqual(Value, _defaultValue);
