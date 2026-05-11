@@ -2,7 +2,8 @@
     x:Class="UnoPropertyGrid.PropertyGridControl"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:local="using:UnoPropertyGrid">
+    xmlns:local="using:UnoPropertyGrid"
+    xmlns:toolkit="using:CommunityToolkit.WinUI.Controls">
 
     <UserControl.Resources>
         <ResourceDictionary>
@@ -312,16 +313,36 @@
             </ComboBox>
         </StackPanel>
 
-        <ScrollViewer
+        <Grid
+            x:Name="RowsHost"
             Grid.Row="3"
-            HorizontalScrollBarVisibility="Disabled"
-            VerticalScrollBarVisibility="Auto">
-            <Grid>
-                <StackPanel x:Name="CategorizedRowsPanel" />
-                <StackPanel x:Name="FlatRowsPanel" Visibility="Collapsed" />
-                <StackPanel x:Name="EventRowsPanel" Visibility="Collapsed" />
-            </Grid>
-        </ScrollViewer>
+            SizeChanged="OnRowsHostSizeChanged">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition x:Name="RowsHostNameColumn" Width="220" MinWidth="120" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition x:Name="RowsHostValueColumn" Width="*" MinWidth="140" />
+            </Grid.ColumnDefinitions>
+
+            <ScrollViewer
+                Grid.ColumnSpan="3"
+                HorizontalScrollBarVisibility="Disabled"
+                VerticalScrollBarVisibility="Auto">
+                <Grid>
+                    <StackPanel x:Name="CategorizedRowsPanel" />
+                    <StackPanel x:Name="FlatRowsPanel" Visibility="Collapsed" />
+                    <StackPanel x:Name="EventRowsPanel" Visibility="Collapsed" />
+                </Grid>
+            </ScrollViewer>
+
+            <toolkit:GridSplitter
+                x:Name="NameColumnSplitter"
+                Grid.Column="1"
+                Width="8"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Stretch"
+                Background="Transparent"
+                ResizeDirection="Columns" />
+        </Grid>
 
         <Border
             x:Name="DescriptionPane"

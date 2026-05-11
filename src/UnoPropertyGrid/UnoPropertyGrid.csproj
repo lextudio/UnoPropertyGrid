@@ -38,6 +38,9 @@
     <PackageReference Include="Microsoft.WindowsAppSDK" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="CommunityToolkit.WinUI.Controls.Sizers" />
+  </ItemGroup>
+  <ItemGroup>
     <Compile Include="**\*.cs" Exclude="obj\**\*.cs;bin\**\*.cs" />
     <Page Include="PropertyGridControl.xaml" />
     <Page Include="PropertyGridThemeResources.xaml" />

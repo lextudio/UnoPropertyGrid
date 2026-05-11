@@ -14,6 +14,10 @@ namespace UnoPropertyGrid;
 
 public sealed partial class PropertyGridControl : UserControl, INotifyPropertyChanged
 {
+    const double DefaultNameColumnWidth = 220d;
+    const double MinNameColumnWidth = 120d;
+    const double MinValueColumnWidth = 140d;
+
     public static readonly DependencyProperty SelectedObjectProperty =
         DependencyProperty.Register(
             nameof(SelectedObject),
@@ -47,7 +51,7 @@ public sealed partial class PropertyGridControl : UserControl, INotifyPropertyCh
             nameof(NameColumnWidth),
             typeof(double),
             typeof(PropertyGridControl),
-            new PropertyMetadata(220d));
+            new PropertyMetadata(DefaultNameColumnWidth, OnNameColumnWidthChanged));
 
     public static readonly DependencyProperty ShowDescriptionPaneProperty =
         DependencyProperty.Register(
@@ -72,6 +76,8 @@ public sealed partial class PropertyGridControl : UserControl, INotifyPropertyCh
     readonly IPropertyGridEventProvider _eventProvider = new ReflectionEventProvider();
     readonly IPropertyGridEditorProvider _builtInEditorProvider = new BuiltInPropertyEditorProvider();
     readonly Dictionary<string, bool> _categoryExpansion = new(StringComparer.Ordinal);
+    bool _applyingNameColumnWidth;
+    bool _syncingNameColumnFromSplitter;
     bool _categorizedRowsDirty = true;
     bool _flatRowsDirty = true;
     bool _eventRowsDirty = true;
@@ -87,7 +93,9 @@ public sealed partial class PropertyGridControl : UserControl, INotifyPropertyCh
     public PropertyGridControl()
     {
         InitializeComponent();
+        RowsHost.LayoutUpdated += OnRowsHostLayoutUpdated;
         ApplyThemeBrushes();
+        ApplyNameColumnWidth(NameColumnWidth);
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
@@ -161,6 +169,11 @@ public sealed partial class PropertyGridControl : UserControl, INotifyPropertyCh
         ((PropertyGridControl)d).SyncToolbarState();
     }
 
+    static void OnNameColumnWidthChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        ((PropertyGridControl)d).HandleNameColumnWidthChanged((double)e.NewValue);
+    }
+
     static void OnPropertyGridThemeChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
         var control = (PropertyGridControl)d;
@@ -174,6 +187,24 @@ public sealed partial class PropertyGridControl : UserControl, INotifyPropertyCh
     public void Refresh()
     {
         RefreshMembers(SelectedObject);
+    }
+
+    void HandleNameColumnWidthChanged(double newWidth)
+    {
+        var clampedWidth = ClampNameColumnWidth(newWidth);
+        if (Math.Abs(clampedWidth - newWidth) > 0.1)
+        {
+            _applyingNameColumnWidth = true;
+            NameColumnWidth = clampedWidth;
+            _applyingNameColumnWidth = false;
+            return;
+        }
+
+        if (!_syncingNameColumnFromSplitter)
+            ApplyNameColumnWidth(clampedWidth);
+
+        MarkAllRowsDirty();
+        ShowActiveRows();
     }
 
     void RefreshMembers(object? selectedObject)
@@ -575,7 +606,52 @@ public sealed partial class PropertyGridControl : UserControl, INotifyPropertyCh
             VerticalAlignment = VerticalAlignment.Center,
             TextTrimming = TextTrimming.CharacterEllipsis
         };
+        ToolTipService.SetToolTip(border, text);
         return border;
+    }
+
+    void OnRowsHostSizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        var clampedWidth = ClampNameColumnWidth(NameColumnWidth);
+        if (Math.Abs(clampedWidth - NameColumnWidth) > 0.1)
+        {
+            _applyingNameColumnWidth = true;
+            NameColumnWidth = clampedWidth;
+            _applyingNameColumnWidth = false;
+        }
+    }
+
+    void OnRowsHostLayoutUpdated(object? sender, object e)
+    {
+        if (_applyingNameColumnWidth || RowsHostNameColumn is null)
+            return;
+
+        var actualWidth = ClampNameColumnWidth(RowsHostNameColumn.ActualWidth);
+        if (Math.Abs(actualWidth - NameColumnWidth) <= 0.5)
+            return;
+
+        _syncingNameColumnFromSplitter = true;
+        NameColumnWidth = actualWidth;
+        _syncingNameColumnFromSplitter = false;
+    }
+
+    double ClampNameColumnWidth(double width)
+    {
+        if (RowsHost is null || RowsHost.ActualWidth <= 0)
+            return Math.Max(MinNameColumnWidth, width);
+
+        var maxWidth = Math.Max(MinNameColumnWidth, RowsHost.ActualWidth - MinValueColumnWidth - 14);
+        return Math.Clamp(width, MinNameColumnWidth, maxWidth);
+    }
+
+    void ApplyNameColumnWidth(double width)
+    {
+        if (RowsHostNameColumn is null)
+            return;
+
+        _applyingNameColumnWidth = true;
+        RowsHostNameColumn.Width = new GridLength(width);
+        _applyingNameColumnWidth = false;
     }
 
     Border CreateIndicatorCell(int column, PropertyGridPropertyViewModel property)
