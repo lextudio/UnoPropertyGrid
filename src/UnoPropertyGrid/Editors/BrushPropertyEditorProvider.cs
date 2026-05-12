@@ -61,7 +61,11 @@ sealed class BrushPropertyEditorProvider : IPropertyGridEditorProvider
 
         var flyout = new Flyout
         {
+#if WINDOWS_APP_SDK
             Placement = FlyoutPlacementMode.BottomEdgeAlignedLeft,
+#else
+            Placement = FlyoutPlacementMode.Auto,
+#endif
             // Cap the presenter height so it never overflows the window on any platform;
             // the ScrollViewer inside then handles the overflow.
             FlyoutPresenterStyle = new Style(typeof(FlyoutPresenter))
@@ -92,6 +96,19 @@ sealed class BrushPropertyEditorProvider : IPropertyGridEditorProvider
         };
 
         flyout.Content = scroll;
+
+#if !WINDOWS_APP_SDK
+        // FlyoutPresenterStyle MaxHeight is ignored by Uno; constrain the presenter directly
+        // after it is created so the ScrollViewer can scroll the overflow.
+        flyout.Opened += (_, _) =>
+        {
+            if (scroll.Parent is FlyoutPresenter fp)
+            {
+                fp.MaxHeight = 480;
+                fp.VerticalAlignment = VerticalAlignment.Top;
+            }
+        };
+#endif
 
         preview.Tapped += (_, _) =>
         {
