@@ -8,7 +8,7 @@
     <UnoSingleProject>true</UnoSingleProject>
     <ApplicationTitle>UnoPropertyGrid Custom Editor Sample</ApplicationTitle>
     <ApplicationId>com.lextudio.unopropertygrid.sample</ApplicationId>
-    <UnoFeatures>SkiaRenderer</UnoFeatures>
+    <UnoFeatures>SkiaRenderer;Svg</UnoFeatures>
     <Nullable>enable</Nullable>
     <LangVersion>latest</LangVersion>
   </PropertyGroup>
@@ -25,7 +25,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\UnoPropertyGrid\UnoPropertyGrid.csproj" />
-    <ProjectReference Include="..\UnoPropertyGrid.Sample.DesignTools\UnoPropertyGrid.Sample.DesignTools.csproj" />
+    <ProjectReference Include="..\UnoPropertyGrid.Sample.DesignTools\UnoPropertyGrid.Sample.DesignTools.csproj" Condition="'$(Configuration)' == 'Debug'" />
+    <ProjectReference Include="..\UnoPropertyGrid.Sample.DesignTools\UnoPropertyGrid.Sample.DesignTools.csproj" Condition="'$(Configuration)' != 'Debug'" ReferenceOutputAssembly="false" PrivateAssets="all" />
   </ItemGroup>
 
   <ItemGroup>

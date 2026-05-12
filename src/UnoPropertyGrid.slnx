@@ -1,5 +1,6 @@
 <Solution>
   <Project Path="UnoPropertyGrid/UnoPropertyGrid.csproj" />
+  <Project Path="UnoPropertyGrid.Sample.DesignTools/UnoPropertyGrid.Sample.DesignTools.csproj" />
   <Project Path="UnoPropertyGrid.Sample/UnoPropertyGrid.Sample.csproj" />
   <Project Path="UnoPropertyGrid.Tests/UnoPropertyGrid.Tests.csproj" />
 </Solution>

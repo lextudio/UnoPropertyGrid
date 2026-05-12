@@ -2,6 +2,7 @@ using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
+using Microsoft.UI.Xaml.Media.Imaging;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Shapes;
 using System;
@@ -66,7 +67,7 @@ sealed class CityMapEditorProvider : IPropertyGridEditorProvider
             Width = MapWidth,
             Height = MapHeight,
             Stretch = Stretch.Fill,
-            Source = new Microsoft.UI.Xaml.Media.Imaging.BitmapImage(new Uri("ms-appx:///Assets/world_map.png"))
+            Source = new SvgImageSource(new Uri("ms-appx:///Assets/Svg/world_map.svg"))
         };
         canvas.Children.Add(map);
 
