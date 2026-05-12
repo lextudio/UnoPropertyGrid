@@ -3,6 +3,7 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
 using Microsoft.UI.Xaml.Shapes;
+using System.Diagnostics;
 using Windows.Foundation;
 using Windows.Storage.Pickers;
 using Windows.UI;
@@ -306,6 +307,7 @@ static class BrushEditorContent
         browseBtn.Click += async (_, _) =>
         {
             var picker = new FileOpenPicker();
+            TryInitializePickerOwnerWindow(picker);
             picker.FileTypeFilter.Add(".png");
             picker.FileTypeFilter.Add(".jpg");
             picker.FileTypeFilter.Add(".jpeg");
@@ -429,6 +431,15 @@ static class BrushEditorContent
         foreach (var stop in stops.OrderBy(s => s.Offset))
             brush.GradientStops.Add(new GradientStop { Color = stop.Color, Offset = stop.Offset });
         return brush;
+    }
+
+    static void TryInitializePickerOwnerWindow(FileOpenPicker picker)
+    {
+#if WINDOWS_APP_SDK
+        var hwnd = Process.GetCurrentProcess().MainWindowHandle;
+        if (hwnd != IntPtr.Zero)
+            WinRT.Interop.InitializeWithWindow.Initialize(picker, hwnd);
+#endif
     }
 
 }

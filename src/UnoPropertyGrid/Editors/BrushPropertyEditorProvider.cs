@@ -59,7 +59,7 @@ sealed class BrushPropertyEditorProvider : IPropertyGridEditorProvider
         frame.Child = inner;
         preview.Children.Add(frame);
 
-        var flyout = new Flyout { Placement = FlyoutPlacementMode.Auto };
+        var flyout = new Flyout { Placement = FlyoutPlacementMode.BottomEdgeAlignedLeft };
         var editorContent = BrushEditorContent.Create(brush, b =>
         {
             PropertyGridEditorProviderUtilities.Commit(context, b);
@@ -80,8 +80,13 @@ sealed class BrushPropertyEditorProvider : IPropertyGridEditorProvider
 
         flyout.Content = container;
 
-        FlyoutBase.SetAttachedFlyout(preview, flyout);
-        preview.Tapped += (_, _) => FlyoutBase.ShowAttachedFlyout(preview);
+        preview.Tapped += (_, _) =>
+        {
+            if (!preview.IsLoaded || flyout.IsOpen)
+                return;
+
+            flyout.ShowAt(preview);
+        };
 
         return preview;
     }

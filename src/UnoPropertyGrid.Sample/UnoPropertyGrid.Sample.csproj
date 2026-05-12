@@ -1,6 +1,9 @@
 <Project Sdk="Uno.Sdk">
   <PropertyGroup>
-    <TargetFramework>net10.0-desktop</TargetFramework>
+    <TargetFrameworks>net10.0-desktop</TargetFrameworks>
+    <TargetFrameworks Condition="'$(OS)' == 'Windows_NT'">$(TargetFrameworks);net10.0-windows10.0.19041.0</TargetFrameworks>
+    <RuntimeIdentifiers>win-x64;win-arm64;linux-x64;linux-arm64;osx-arm64;osx-x64</RuntimeIdentifiers>
+
     <OutputType>Exe</OutputType>
     <UnoSingleProject>true</UnoSingleProject>
     <ApplicationTitle>UnoPropertyGrid Custom Editor Sample</ApplicationTitle>
@@ -10,8 +13,27 @@
     <LangVersion>latest</LangVersion>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net10.0-windows10.0.19041.0'">
+    <UseWinUI>true</UseWinUI>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <DefineConstants>$(DefineConstants);WINDOWS_APP_SDK</DefineConstants>
+    <WindowsSdkPackageVersion>10.0.19041.57</WindowsSdkPackageVersion>
+    <WindowsPackageType>None</WindowsPackageType>
+    <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+  </PropertyGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\UnoPropertyGrid\UnoPropertyGrid.csproj" />
-    <PackageReference Include="Tmds.DBus.Protocol" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Tmds.DBus.Protocol" Condition="'$(TargetFramework)' == 'net10.0-desktop'" />
+    <PackageReference Include="CommunityToolkit.WinUI.Controls.Sizers" />
+    <PackageReference Include="Microsoft.WindowsAppSDK" Condition="'$(TargetFramework)' == 'net10.0-windows10.0.19041.0'" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'net10.0-windows10.0.19041.0'">
+    <Compile Remove="Platforms\\**" />
   </ItemGroup>
 </Project>
