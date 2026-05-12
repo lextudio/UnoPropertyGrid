@@ -107,10 +107,10 @@ Suggested structure:
 
 ```text
 +------------------------------------------------+
-| Name                 <No Name>                  |
-| Type                 UserControl                |
+| Name        <No Name>    [properties] [events]  |
+| Type        UserControl                         |
 +------------------------------------------------+
-| [properties] [events]  [categorized] [A-Z] [...]|
+|   [categorized] [A-Z] [...]|
 +------------------------------------------------+
 | search properties/events                        |
 +------------------------------------------------+
@@ -407,7 +407,7 @@ Use cases:
 
 ## Design-Time Custom Editors
 
-UnoPropertyGrid emulates the Visual Studio design-time metadata pattern for WinUI/UWP/WPF controls. A control library can keep runtime controls clean and place property-grid metadata in a design-tools assembly or in the sample/application assembly.
+UnoPropertyGrid emulates the Visual Studio design-time metadata pattern for UWP/WPF controls. A control library can keep runtime controls clean and place property-grid metadata in a design-tools assembly or in the sample/application assembly.
 
 The namespaces intentionally mirror the Visual Studio model while staying project-owned:
 
@@ -540,10 +540,8 @@ Suggested events layout:
 
 ```text
 +------------------------------------------------+
-| Name                 <No Name>                  |
-| Type                 UserControl                |
-+------------------------------------------------+
-| [properties] [events*]                          |
+| Name        <No Name>    [properties] [events]  |
+| Type        UserControl                         |
 +------------------------------------------------+
 | ContextMenuClosing       [                    ] |
 | ContextMenuOpening       [                    ] |
@@ -620,16 +618,6 @@ Recommended order:
 10. Add dependency property metadata provider.
 11. Add host-provided event service hooks.
 12. Add keyboard navigation and accessibility pass.
-
-## UnoEdit Replacement Notes
-
-UnoPropertyGrid should remain a reusable external component. UnoEdit samples and applications should reference `UnoPropertyGrid` directly instead of reviving workspace-local property grid code.
-
-Historical replacement notes from the previous design document:
-
-- `UnoEdit.Sample` referenced `UnoPropertyGrid` and used `xmlns:pg="using:UnoPropertyGrid"`.
-- `UnoEdit.WinUI.Sample` had been updated to reference/use `UnoPropertyGrid`, but full restore/build was blocked by target-framework incompatibilities between the WinUI sample and `net9.0-desktop` UnoEdit libraries.
-- Temporary `UnoEdit.PropertyGrid` code should stay only while sample or packaging references still require it. Once no project references it, delete the temporary project.
 
 ## Testing
 
