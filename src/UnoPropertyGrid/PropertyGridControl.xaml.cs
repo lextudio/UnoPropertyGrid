@@ -9,6 +9,7 @@ using Microsoft.UI.Xaml.Shapes;
 using Windows.UI;
 using Windows.UI.Text;
 using Button = Microsoft.UI.Xaml.Controls.Button;
+using LeXtudio.UnoPropertyGrid.DesignTools.Extensibility.PropertyEditing;
 
 namespace UnoPropertyGrid;
 
@@ -516,6 +517,11 @@ public sealed partial class PropertyGridControl : UserControl, INotifyPropertyCh
     FrameworkElement CreateEditor(PropertyGridPropertyViewModel property)
     {
         var context = CreateEditorContext(property);
+
+        var metadataProvider = PropertyEditorFactory.CreateEditorProvider(property.Descriptor.Attributes);
+        if (metadataProvider != null && metadataProvider.CanEdit(context))
+            return metadataProvider.CreateEditor(context);
+
         foreach (var provider in EditorProviders)
         {
             if (!provider.CanEdit(context))

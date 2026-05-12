@@ -68,10 +68,13 @@ Important files:
 
 - `src/UnoPropertyGrid/UnoPropertyGrid.csproj`: standalone Uno library.
 - `src/UnoPropertyGrid/PropertyGridControl.xaml`: public UI surface.
-- `src/UnoPropertyGrid/PropertyEditorControl.xaml`: built-in editor host.
+- `src/UnoPropertyGrid/Editors/`: built-in editor providers and shared editor helpers.
+- `src/UnoPropertyGrid/DesignTools/Extensibility/Metadata/`: design-time-style metadata registration API.
+- `src/UnoPropertyGrid/DesignTools/Extensibility/PropertyEditing/`: custom property editor API.
 - `src/UnoPropertyGrid/TypeDescriptorPropertyProvider.cs`: default discovery provider.
 - `src/UnoPropertyGrid/PropertyGridPropertyDescriptor.cs`: read/write wrapper over reflected property metadata.
 - `src/UnoPropertyGrid/PropertyGridPropertyViewModel.cs`: bindable property row model.
+- `src/UnoPropertyGrid.Sample.DesignTools/`: sample design-tools assembly with metadata-registered custom editors.
 - `src/UnoPropertyGrid.Tests/UnoPropertyGrid.Tests.csproj`: plain .NET tests for the non-UI core.
 
 Tests should continue to keep the metadata, conversion, and view-model core usable without initializing a Uno UI runtime.
@@ -310,7 +313,7 @@ For WinUI/Uno controls, dependency property metadata is important because many u
 
 ## Editor Architecture
 
-The current `PropertyEditorKind` enum is useful as a bootstrap, but it will not scale to WinUI/Uno controls. Replace or wrap it with an editor registry.
+The editor system is provider-based. Built-in editors live in `src/UnoPropertyGrid/Editors/`, custom editors use the same provider contract, and metadata can attach a provider to a specific component property.
 
 ```csharp
 public interface IPropertyGridEditorProvider
@@ -323,24 +326,24 @@ public interface IPropertyGridEditorProvider
 ```csharp
 public sealed class PropertyGridEditorContext
 {
-    public object Component { get; init; }
-    public IPropertyGridMemberDescriptor Descriptor { get; init; }
+    public required object Component { get; init; }
+    public required PropertyGridPropertyDescriptor Descriptor { get; init; }
     public object? Value { get; set; }
-    public BindingMode BindingMode { get; init; }
+    public BindingMode BindingMode { get; init; } = BindingMode.TwoWay;
     public IServiceProvider? Services { get; init; }
+    public Action<object?>? SetValue { get; init; }
 }
 ```
 
 Editor resolution order:
 
-1. Property-specific editor registered by host.
-2. Attribute-provided editor, such as `EditorAttribute`.
-3. Type-specific editor registered by host.
-4. Built-in editor for known primitive and WinUI types.
-5. Type converter text editor.
-6. Read-only display.
+1. Metadata-provided editor from `LeXtudio.UnoPropertyGrid.DesignTools.Extensibility.PropertyEditing.EditorAttribute`.
+2. Host-registered providers in `PropertyGridControl.EditorProviders`.
+3. Built-in editor for known primitive and WinUI types.
+4. Type converter text editor.
+5. Read-only display.
 
-This follows the same general pattern used by property-grid controls: default editors for common types, plus a way to replace an editor through metadata or templates.
+This follows the same general pattern used by property-grid controls: default editors for common types, plus a way to replace an editor through metadata or direct host registration.
 
 ## Built-In Editors
 
@@ -401,6 +404,103 @@ Use cases:
 - A designer host provides a resource picker for `Brush`, `Style`, or `ControlTemplate`.
 - A XAML editor host provides an event handler picker.
 - A validation-heavy application replaces a numeric editor with a constrained slider/spinner.
+
+## Design-Time Custom Editors
+
+UnoPropertyGrid emulates the Visual Studio design-time metadata pattern for WinUI/UWP/WPF controls. A control library can keep runtime controls clean and place property-grid metadata in a design-tools assembly or in the sample/application assembly.
+
+The namespaces intentionally mirror the Visual Studio model while staying project-owned:
+
+- `LeXtudio.UnoPropertyGrid.DesignTools.Extensibility.Metadata`
+- `LeXtudio.UnoPropertyGrid.DesignTools.Extensibility.PropertyEditing`
+
+Use `PropertyValueEditor` for the common case. It implements `IPropertyGridEditorProvider`, defaults `CanEdit` to writable properties, and leaves editor creation to the derived class.
+
+```csharp
+using LeXtudio.UnoPropertyGrid.DesignTools.Extensibility.PropertyEditing;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
+using UnoPropertyGrid;
+
+public sealed class RatingValueEditor : PropertyValueEditor
+{
+    public override bool CanEdit(PropertyGridEditorContext context)
+    {
+        return context.Descriptor.PropertyType == typeof(double)
+            && base.CanEdit(context);
+    }
+
+    public override FrameworkElement CreateEditor(PropertyGridEditorContext context)
+    {
+        var slider = new Slider
+        {
+            Minimum = 0,
+            Maximum = 5,
+            Value = context.Value is double value ? value : 0
+        };
+
+        slider.ValueChanged += (_, args) => context.SetValue?.Invoke(args.NewValue);
+        return slider;
+    }
+}
+```
+
+Register that editor through an attribute table:
+
+```csharp
+using System.ComponentModel;
+using LeXtudio.UnoPropertyGrid.DesignTools.Extensibility.Metadata;
+using LeXtudio.UnoPropertyGrid.DesignTools.Extensibility.PropertyEditing;
+using EditorAttribute = LeXtudio.UnoPropertyGrid.DesignTools.Extensibility.PropertyEditing.EditorAttribute;
+
+[assembly: ProvideMetadata(typeof(MyUwpControls.DesignTools.Metadata))]
+
+namespace MyUwpControls.DesignTools;
+
+public sealed class Metadata : IProvideAttributeTable
+{
+    public AttributeTable AttributeTable
+    {
+        get
+        {
+            var builder = new AttributeTableBuilder();
+
+            builder.AddCustomAttributes(
+                "MyUwpControls.RatingBox",
+                "Value",
+                new CategoryAttribute("Common"),
+                new DescriptionAttribute("The current rating value."),
+                new EditorAttribute(typeof(RatingValueEditor), typeof(IPropertyGridEditorProvider)));
+
+            return builder.CreateTable();
+        }
+    }
+}
+```
+
+`AttributeTableBuilder.AddCustomAttributes` also accepts a `Type`, which is useful when the target control type is referenced directly:
+
+```csharp
+builder.AddCustomAttributes(
+    typeof(RatingBox),
+    nameof(RatingBox.Value),
+    new EditorAttribute(typeof(RatingValueEditor), typeof(IPropertyGridEditorProvider)));
+```
+
+Discovery is automatic for loaded assemblies:
+
+- `AttributeTableStore` scans loaded assemblies for `[assembly: ProvideMetadata(...)]`.
+- Each metadata provider returns one `AttributeTable`.
+- `PropertyGridPropertyDescriptor.Attributes` merges reflected/`TypeDescriptor` attributes with metadata attributes.
+- `PropertyGridControl` reads the project-owned `EditorAttribute`, creates the editor provider, and uses it before host-registered and built-in providers.
+
+`System.ComponentModel.EditorAttribute` is intentionally not part of the editor-resolution path. UnoPropertyGrid uses its own `EditorAttribute` to avoid two competing metadata channels and to keep the editor contract tied to `IPropertyGridEditorProvider`.
+
+Metadata can also provide normal component attributes such as `CategoryAttribute`, `DescriptionAttribute`, `DisplayNameAttribute`, `BrowsableAttribute`, `ReadOnlyAttribute`, and `DefaultValueAttribute`. These attributes participate in property grouping, row text, visibility, read-only state, and default-value comparison.
+
+Editor implementations should commit through `context.SetValue?.Invoke(value)` rather than setting the target object directly. The context path keeps conversion, refresh, and default-value indicators synchronized with the grid.
+
+Use `PropertyGridControl.EditorProviders` for host-level overrides that are broader than one property, such as replacing every `Thickness` editor in an application or registering a resource picker supplied by a designer host. Use design-time metadata for control/property-specific editors that should travel with a control library.
 
 ## Value Conversion
 

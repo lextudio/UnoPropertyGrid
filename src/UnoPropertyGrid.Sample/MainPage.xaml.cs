@@ -35,11 +35,6 @@ public sealed partial class MainPage : Page
     {
         InitializeComponent();
 
-        PropertyGrid.EditorProviders.Add(new DateEditorProvider());
-        PropertyGrid.EditorProviders.Add(new TimeEditorProvider());
-        PropertyGrid.EditorProviders.Add(new VolumeEditorProvider());
-        PropertyGrid.EditorProviders.Add(new CityMapEditorProvider());
-
         ObjectSelector.ItemsSource = new[]
         {
             new SampleObject("Scenario settings", _settings),

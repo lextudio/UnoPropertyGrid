@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using System.Globalization;
 using System.Reflection;
+using LeXtudio.UnoPropertyGrid.DesignTools.Extensibility.Metadata;
 using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Media;
@@ -34,34 +35,46 @@ public sealed class PropertyGridPropertyDescriptor
     public string DisplayName =>
         _descriptor?.DisplayName is { Length: > 0 } descriptorName && descriptorName != Name
             ? descriptorName
-            : _property?.GetCustomAttribute<DisplayNameAttribute>()?.DisplayName is { Length: > 0 } dn
+            : Attributes.OfType<DisplayNameAttribute>().LastOrDefault()?.DisplayName is { Length: > 0 } dn
                 ? dn
                 : Name;
 
     public string Category =>
         _descriptor?.Category is { Length: > 0 } descriptorCategory && descriptorCategory != CategoryAttribute.Default.Category
             ? descriptorCategory
-            : _property?.GetCustomAttribute<CategoryAttribute>()?.Category is { Length: > 0 } cat
+            : Attributes.OfType<CategoryAttribute>().LastOrDefault()?.Category is { Length: > 0 } cat
                 ? cat
                 : "Miscellaneous";
 
     public string Description =>
         _descriptor?.Description is { Length: > 0 } descriptorDescription
             ? descriptorDescription
-            : _property?.GetCustomAttribute<DescriptionAttribute>()?.Description ?? string.Empty;
+            : Attributes.OfType<DescriptionAttribute>().LastOrDefault()?.Description ?? string.Empty;
 
     public Type PropertyType => _descriptor?.PropertyType ?? _property!.PropertyType;
 
     public bool IsReadOnly =>
-        _descriptor?.IsReadOnly
-        ?? (!_property!.CanWrite || _property.GetCustomAttribute<ReadOnlyAttribute>()?.IsReadOnly == true);
+        _descriptor?.IsReadOnly == true
+        || (_property != null && !_property.CanWrite)
+        || Attributes.OfType<ReadOnlyAttribute>().LastOrDefault()?.IsReadOnly == true;
 
     public bool IsBrowsable =>
-        _descriptor?.IsBrowsable
-        ?? (_property!.GetCustomAttribute<BrowsableAttribute>()?.Browsable ?? true);
+        Attributes.OfType<BrowsableAttribute>().LastOrDefault()?.Browsable
+        ?? _descriptor?.IsBrowsable
+        ?? true;
 
     public IEnumerable<Attribute> Attributes =>
-        _descriptor?.Attributes.Cast<Attribute>() ?? _property!.GetCustomAttributes().OfType<Attribute>();
+        GetAttributes();
+
+    IEnumerable<Attribute> GetAttributes()
+    {
+        var localAttributes = _descriptor?.Attributes.Cast<Attribute>() ?? _property!.GetCustomAttributes().OfType<Attribute>();
+        foreach (var attribute in localAttributes)
+            yield return attribute;
+
+        foreach (var attribute in AttributeTableStore.GetCustomAttributes(_component.GetType(), Name))
+            yield return attribute;
+    }
 
     public object? GetDefaultValue()
     {

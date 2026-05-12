@@ -11,7 +11,7 @@ using System.Linq;
 using Windows.System;
 using Windows.UI;
 
-namespace UnoPropertyGrid.Sample;
+namespace UnoPropertyGrid.Sample.DesignTools;
 
 sealed class CityMapEditorProvider : IPropertyGridEditorProvider
 {
