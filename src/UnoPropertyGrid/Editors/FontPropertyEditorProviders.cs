@@ -14,13 +14,33 @@ sealed class FontFamilyPropertyEditorProvider : IPropertyGridEditorProvider
 
     public FrameworkElement CreateEditor(PropertyGridEditorContext context)
     {
-        var comboBox = new ComboBox
+        var currentSource = context.Value is Microsoft.UI.Xaml.Media.FontFamily family ? family.Source : context.Value?.ToString();
+        var comboBox = new ComboBox { HorizontalAlignment = HorizontalAlignment.Stretch };
+
+        foreach (var name in _fontFamilies)
         {
-            ItemsSource = _fontFamilies,
-            SelectedItem = context.Value is Microsoft.UI.Xaml.Media.FontFamily family ? family.Source : context.Value?.ToString() ?? _fontFamilies.FirstOrDefault(),
-            HorizontalAlignment = HorizontalAlignment.Stretch
+            var item = new ComboBoxItem
+            {
+                Content = name,
+                FontFamily = new Microsoft.UI.Xaml.Media.FontFamily(name),
+                Tag = name
+            };
+            comboBox.Items.Add(item);
+            if (name == currentSource)
+            {
+                comboBox.SelectedItem = item;
+                comboBox.FontFamily = item.FontFamily;
+            }
+        }
+
+        comboBox.SelectionChanged += (_, _) =>
+        {
+            if (comboBox.SelectedItem is ComboBoxItem selected)
+            {
+                comboBox.FontFamily = selected.FontFamily;
+                PropertyGridEditorProviderUtilities.Commit(context, selected.Tag);
+            }
         };
-        comboBox.SelectionChanged += (_, _) => PropertyGridEditorProviderUtilities.Commit(context, comboBox.SelectedItem);
         return comboBox;
     }
 }
@@ -87,13 +107,32 @@ sealed class FontStylePropertyEditorProvider : IPropertyGridEditorProvider
 
     public FrameworkElement CreateEditor(PropertyGridEditorContext context)
     {
-        var comboBox = new ComboBox
+        var comboBox = new ComboBox { HorizontalAlignment = HorizontalAlignment.Stretch };
+
+        foreach (Windows.UI.Text.FontStyle style in PropertyGridEditorProviderUtilities.FontStyles)
         {
-            ItemsSource = PropertyGridEditorProviderUtilities.FontStyles,
-            SelectedItem = context.Value,
-            HorizontalAlignment = HorizontalAlignment.Stretch
+            var item = new ComboBoxItem
+            {
+                Content = style.ToString(),
+                FontStyle = style,
+                Tag = style
+            };
+            comboBox.Items.Add(item);
+            if (style.Equals(context.Value))
+            {
+                comboBox.SelectedItem = item;
+                comboBox.FontStyle = style;
+            }
+        }
+
+        comboBox.SelectionChanged += (_, _) =>
+        {
+            if (comboBox.SelectedItem is ComboBoxItem selected && selected.Tag is Windows.UI.Text.FontStyle selectedStyle)
+            {
+                comboBox.FontStyle = selectedStyle;
+                PropertyGridEditorProviderUtilities.Commit(context, selected.Tag);
+            }
         };
-        comboBox.SelectionChanged += (_, _) => PropertyGridEditorProviderUtilities.Commit(context, comboBox.SelectedItem);
         return comboBox;
     }
 }
