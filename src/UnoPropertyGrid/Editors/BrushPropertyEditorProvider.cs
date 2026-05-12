@@ -59,7 +59,16 @@ sealed class BrushPropertyEditorProvider : IPropertyGridEditorProvider
         frame.Child = inner;
         preview.Children.Add(frame);
 
-        var flyout = new Flyout { Placement = FlyoutPlacementMode.BottomEdgeAlignedLeft };
+        var flyout = new Flyout
+        {
+            Placement = FlyoutPlacementMode.BottomEdgeAlignedLeft,
+            // Cap the presenter height so it never overflows the window on any platform;
+            // the ScrollViewer inside then handles the overflow.
+            FlyoutPresenterStyle = new Style(typeof(FlyoutPresenter))
+            {
+                Setters = { new Setter(FrameworkElement.MaxHeightProperty, 500.0) }
+            }
+        };
         var editorContent = BrushEditorContent.Create(brush, b =>
         {
             PropertyGridEditorProviderUtilities.Commit(context, b);
@@ -70,15 +79,19 @@ sealed class BrushPropertyEditorProvider : IPropertyGridEditorProvider
             backdrop.Visibility = isNowTransparent ? Visibility.Visible : Visibility.Collapsed;
         });
 
-        // Constrain the flyout width so the brush editor doesn't become too wide
-        var container = new Border
+        var scroll = new ScrollViewer
         {
-            Padding = new Thickness(8),
-            MaxWidth = 640,
-            Child = editorContent
+            VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+            HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
+            Content = new Border
+            {
+                Padding = new Thickness(8),
+                MaxWidth = 640,
+                Child = editorContent
+            }
         };
 
-        flyout.Content = container;
+        flyout.Content = scroll;
 
         preview.Tapped += (_, _) =>
         {
