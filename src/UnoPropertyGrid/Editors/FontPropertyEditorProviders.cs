@@ -27,6 +27,19 @@ sealed class FontFamilyPropertyEditorProvider : IPropertyGridEditorProvider
 
 sealed class FontWeightPropertyEditorProvider : IPropertyGridEditorProvider
 {
+    static readonly (string Name, ushort Weight)[] _entries =
+    [
+        ("Thin",       100),
+        ("ExtraLight", 200),
+        ("Light",      300),
+        ("Normal",     400),
+        ("Medium",     500),
+        ("SemiBold",   600),
+        ("Bold",       700),
+        ("ExtraBold",  800),
+        ("Black",      900),
+    ];
+
     public bool CanEdit(PropertyGridEditorContext context)
     {
         return PropertyEditorKindExtensions.FromType(context.Descriptor.PropertyType, context.Descriptor.IsReadOnly) == PropertyEditorKind.FontWeight;
@@ -34,13 +47,33 @@ sealed class FontWeightPropertyEditorProvider : IPropertyGridEditorProvider
 
     public FrameworkElement CreateEditor(PropertyGridEditorContext context)
     {
-        var comboBox = new ComboBox
+        var currentName = PropertyGridEditorProviderUtilities.GetFontWeightName(context.Value);
+        var comboBox = new ComboBox { HorizontalAlignment = HorizontalAlignment.Stretch };
+
+        foreach (var (name, weight) in _entries)
         {
-            ItemsSource = PropertyGridEditorProviderUtilities.FontWeights,
-            SelectedItem = PropertyGridEditorProviderUtilities.GetFontWeightName(context.Value),
-            HorizontalAlignment = HorizontalAlignment.Stretch
+            var item = new ComboBoxItem
+            {
+                Content = name,
+                FontWeight = new Windows.UI.Text.FontWeight { Weight = weight },
+                Tag = name
+            };
+            comboBox.Items.Add(item);
+            if (name == currentName)
+            {
+                comboBox.SelectedItem = item;
+                comboBox.FontWeight = item.FontWeight;
+            }
+        }
+
+        comboBox.SelectionChanged += (_, _) =>
+        {
+            if (comboBox.SelectedItem is ComboBoxItem selected)
+            {
+                comboBox.FontWeight = selected.FontWeight;
+                PropertyGridEditorProviderUtilities.Commit(context, selected.Tag);
+            }
         };
-        comboBox.SelectionChanged += (_, _) => PropertyGridEditorProviderUtilities.Commit(context, comboBox.SelectedItem);
         return comboBox;
     }
 }
