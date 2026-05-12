@@ -10,6 +10,9 @@ public sealed class TypeDescriptorPropertyProvider : IPropertyGridPropertyProvid
         if (component == null)
             throw new ArgumentNullException(nameof(component));
 
+        var reflectionProperties = component.GetType()
+            .GetProperties(BindingFlags.Public | BindingFlags.Instance)
+            .ToDictionary(property => property.Name, StringComparer.Ordinal);
         var descriptorNames = new HashSet<string>(StringComparer.Ordinal);
         foreach (PropertyDescriptor descriptor in GetSafeTypeDescriptorProperties(component))
         {
@@ -17,10 +20,13 @@ public sealed class TypeDescriptorPropertyProvider : IPropertyGridPropertyProvid
             if (!descriptor.IsBrowsable)
                 continue;
 
-            yield return new PropertyGridPropertyDescriptor(component, descriptor);
+            if (reflectionProperties.TryGetValue(descriptor.Name, out var property) && property.CanRead)
+                yield return new PropertyGridPropertyDescriptor(component, property, descriptor);
+            else
+                yield return new PropertyGridPropertyDescriptor(component, descriptor);
         }
 
-        foreach (var property in component.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance))
+        foreach (var property in reflectionProperties.Values)
         {
             if (descriptorNames.Contains(property.Name))
                 continue;

@@ -1,5 +1,7 @@
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Linq;
+using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Media;
 using NUnit.Framework;
 using Windows.UI.Text;
@@ -7,6 +9,9 @@ using Windows.UI.Text;
 namespace UnoPropertyGrid.Tests;
 
 [TestFixture]
+#if WINDOWS_APP_SDK
+[Apartment(System.Threading.ApartmentState.STA)]
+#endif
 public sealed class PropertyProviderTests
 {
     [Test]
@@ -100,7 +105,24 @@ public sealed class PropertyProviderTests
     [Test]
     public void ViewModel_WritesFontFamilyValue()
     {
+#if WINDOWS_APP_SDK
+        if (Environment.GetEnvironmentVariable(StandaloneWinUITestEnvironmentVariable) != "1")
+        {
+            RunFontFamilyTestInStandaloneProcess();
+            return;
+        }
+#endif
+
+        RunWithWinUIApplication(Test);
+
+        static void Test()
+        {
         var target = new SampleComponent();
+        target.FontFamily = new FontFamily("Segoe UI");
+        Assert.That(target.FontFamily, Is.Not.Null);
+        Assert.That(target.FontFamily!.Source, Is.EqualTo("Segoe UI"));
+        target.FontFamily = null;
+
         var property = new TypeDescriptorPropertyProvider()
             .GetProperties(target)
             .Single(p => p.Name == nameof(SampleComponent.FontFamily));
@@ -110,7 +132,10 @@ public sealed class PropertyProviderTests
 
         viewModel.FontFamilyValue = "Consolas";
 
-        Assert.That(target.FontFamily.Source, Is.EqualTo("Consolas"));
+        Assert.That(viewModel.HasError, Is.False, viewModel.Error);
+        Assert.That(target.FontFamily, Is.Not.Null);
+        Assert.That(target.FontFamily!.Source, Is.EqualTo("Consolas"));
+        }
     }
 
     [Test]
@@ -157,7 +182,7 @@ public sealed class PropertyProviderTests
 
         public string ReadOnlyName => "fixed";
 
-        public FontFamily FontFamily { get; set; } = new("Segoe UI");
+        public FontFamily? FontFamily { get; set; }
 
         public FontWeight FontWeight { get; set; } = new() { Weight = 400 };
 
@@ -179,4 +204,67 @@ public sealed class PropertyProviderTests
         First,
         Second
     }
+
+#if WINDOWS_APP_SDK
+    sealed class TestApplication : Application
+    {
+    }
+#endif
+
+    static void RunWithWinUIApplication(Action action)
+    {
+#if WINDOWS_APP_SDK
+        Exception? exception = null;
+        Application.Start(_ =>
+        {
+            var app = new TestApplication();
+            try
+            {
+                action();
+            }
+            catch (Exception ex)
+            {
+                exception = ex;
+            }
+            finally
+            {
+                Application.Current.Exit();
+            }
+        });
+
+        if (exception != null)
+            throw exception;
+#else
+        action();
+#endif
+    }
+
+#if WINDOWS_APP_SDK
+    const string StandaloneWinUITestEnvironmentVariable = "UNOPROPERTYGRID_STANDALONE_WINUI_TEST";
+
+    static void RunFontFamilyTestInStandaloneProcess()
+    {
+        var assemblyPath = typeof(PropertyProviderTests).Assembly.Location;
+        var executablePath = Path.ChangeExtension(assemblyPath, ".exe");
+        Assert.That(File.Exists(executablePath), Is.True, $"Test executable was not found at '{executablePath}'.");
+
+        using var process = new Process();
+        process.StartInfo = new ProcessStartInfo(executablePath)
+        {
+            UseShellExecute = false,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            WorkingDirectory = Path.GetDirectoryName(executablePath)!
+        };
+        process.StartInfo.ArgumentList.Add("--where");
+        process.StartInfo.ArgumentList.Add($"test == '{typeof(PropertyProviderTests).FullName}.{nameof(ViewModel_WritesFontFamilyValue)}'");
+        process.StartInfo.Environment[StandaloneWinUITestEnvironmentVariable] = "1";
+
+        process.Start();
+        var output = process.StandardOutput.ReadToEnd();
+        var error = process.StandardError.ReadToEnd();
+        Assert.That(process.WaitForExit(60000), Is.True, "Standalone WinUI test process timed out.");
+        Assert.That(process.ExitCode, Is.EqualTo(0), output + error);
+    }
+#endif
 }

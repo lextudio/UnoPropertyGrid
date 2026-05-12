@@ -1,16 +1,44 @@
 <Project Sdk="Uno.Sdk">
   <PropertyGroup>
-    <TargetFramework>net10.0-desktop</TargetFramework>
-    <OutputType>Library</OutputType>
+    <TargetFrameworks>net10.0-desktop</TargetFrameworks>
+    <TargetFrameworks Condition="'$(OS)' == 'Windows_NT'">$(TargetFrameworks);net10.0-windows10.0.19041.0</TargetFrameworks>
+    <OutputType>Exe</OutputType>
     <StartupObject>UnoPropertyGrid.Tests.Program</StartupObject>
+    <WinUISDKReferences>false</WinUISDKReferences>
+    <UnoSingleProject>true</UnoSingleProject>
+    <UnoFeatures>SkiaRenderer;</UnoFeatures>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
-    <EnableDefaultCompileItems>true</EnableDefaultCompileItems>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     <GenerateTargetPlatformAttribute>false</GenerateTargetPlatformAttribute>
     <GenerateSupportedOSPlatformAttribute>false</GenerateSupportedOSPlatformAttribute>
     <NoWarn>$(NoWarn);CA1416</NoWarn>
   </PropertyGroup>
+
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net10.0-windows10.0.19041.0'">
+    <UseWinUI>true</UseWinUI>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <DefineConstants>$(DefineConstants);WINDOWS_APP_SDK</DefineConstants>
+    <WindowsSdkPackageVersion>10.0.19041.57</WindowsSdkPackageVersion>
+    <WindowsPackageType>None</WindowsPackageType>
+    <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
+  </PropertyGroup>
+
+  <!-- Uno.SingleProject.WinAppSdk.targets sets OutputType=WinExe for Uno heads after static evaluation.
+       Restore it to Exe before test validation and compilation. -->
+  <Target Name="_RestoreOutputTypeForTests"
+          BeforeTargets="BeforeBuild"
+          Condition="'$(TargetFramework)' == 'net10.0-windows10.0.19041.0'">
+    <PropertyGroup>
+      <OutputType>Exe</OutputType>
+    </PropertyGroup>
+  </Target>
+
+  <ItemGroup>
+    <Compile Include="Program.cs" />
+    <Compile Include="PropertyProviderTests.cs" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
@@ -19,7 +47,15 @@
     <PackageReference Include="NUnit3TestAdapter" />
   </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\UnoPropertyGrid\UnoPropertyGrid.csproj" />
+  <ItemGroup Condition="'$(TargetFramework)' == 'net10.0-windows10.0.19041.0'">
+    <PackageReference Include="Microsoft.WindowsAppSDK" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'net10.0-desktop'">
+    <ProjectReference Include="..\UnoPropertyGrid\UnoPropertyGrid.csproj" SetTargetFramework="TargetFramework=net9.0-desktop" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'net10.0-windows10.0.19041.0'">
+    <ProjectReference Include="..\UnoPropertyGrid\UnoPropertyGrid.csproj" SetTargetFramework="TargetFramework=net9.0-windows10.0.19041.0" />
   </ItemGroup>
 </Project>

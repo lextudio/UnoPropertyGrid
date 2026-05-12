@@ -17,9 +17,15 @@ public sealed class PropertyGridPropertyDescriptor
     readonly PropertyDescriptor? _descriptor;
 
     public PropertyGridPropertyDescriptor(object component, PropertyInfo property)
+        : this(component, property, null)
+    {
+    }
+
+    public PropertyGridPropertyDescriptor(object component, PropertyInfo property, PropertyDescriptor? descriptor)
     {
         _component = component ?? throw new ArgumentNullException(nameof(component));
         _property = property ?? throw new ArgumentNullException(nameof(property));
+        _descriptor = descriptor;
     }
 
     public PropertyGridPropertyDescriptor(object component, PropertyDescriptor descriptor)
@@ -102,9 +108,9 @@ public sealed class PropertyGridPropertyDescriptor
 
     public object? GetValue()
     {
-        return _descriptor != null
-            ? _descriptor.GetValue(_component)
-            : _property!.GetValue(_component);
+        return _property != null
+            ? _property.GetValue(_component)
+            : _descriptor!.GetValue(_component);
     }
 
     public void SetValue(object? value)
@@ -114,10 +120,10 @@ public sealed class PropertyGridPropertyDescriptor
 
         var converted = ConvertValue(value);
         PropertyGridLogger.Log($"Descriptor [{Name}]: SetValue component={_component?.GetType().Name}, value={value}, converted={converted}");
-        if (_descriptor != null)
-            _descriptor.SetValue(_component, converted);
+        if (_property != null)
+            _property.SetValue(_component, converted);
         else
-            _property!.SetValue(_component, converted);
+            _descriptor!.SetValue(_component, converted);
         PropertyGridLogger.Log($"Descriptor [{Name}]: SetValue done, read-back={GetValue()}");
     }
 
