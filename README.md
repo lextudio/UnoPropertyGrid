@@ -23,7 +23,7 @@ The main deliverable is a NuGet package:
 
 - [![NuGet](https://img.shields.io/nuget/v/LeXtudio.UnoPropertyGrid.svg?label=LeXtudio.UnoPropertyGrid)](https://www.nuget.org/packages/LeXtudio.UnoPropertyGrid) The core property grid component.
 
-Study [UnoEdit sample project](https://github.com/lextudio/UnoEdit) to see how to use UnoPropertyGrid in your own applications (Uno Platform and WinUI 3).
+Study [the sample project](https://github.com/lextudio/UnoPropertyGrid/tree/master/src/UnoPropertyGrid.Sample) to see how to use UnoPropertyGrid in your own applications (Uno Platform and WinUI 3).
 
 ## Current Status
 
@@ -31,7 +31,7 @@ TODO
 
 ## TODO Items Before v1.0.0
 
-- [ ] Publish package to NuGet.org
+- [ ] More built-in editors (currently only a few basic types are supported)
 - [ ] Finish dark theme support (currently functional but not fully polished)
 - [ ] IME support improvements (currently functional but not fully polished)
 - [ ] Accessibility support (screen readers, keyboard navigation, etc.)
