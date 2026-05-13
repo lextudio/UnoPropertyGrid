@@ -2,12 +2,19 @@
 
 UnoPropertyGrid is a desktop-first property grid for [Uno Platform](https://platform.uno) and [WinUI 3](https://learn.microsoft.com/windows/apps/winui/winui3/).
 
-![UnoPropertyGrid on macOS](https://raw.githubusercontent.com/lextudio/UnoPropertyGrid/master/images/macos.png)
-
 Current scope:
 
 - Target Uno Skia Desktop (WinUI 3 port is included but not the primary focus).
 - Do not target mobile during the bootstrap phase (v0.x.x).
+
+## Screenshot & Video
+
+![UnoPropertyGrid on macOS](https://raw.githubusercontent.com/lextudio/UnoPropertyGrid/master/images/macos.png)
+
+<video controls width="720" src="images/property-grid.mp4">
+	Your browser does not support the video tag. Download the video: [property-grid.mp4](images/property-grid.mp4)
+</video>
+
 
 ## Supported Platforms
 
@@ -25,9 +32,13 @@ The main deliverable is a NuGet package:
 
 Study [the sample project](https://github.com/lextudio/UnoPropertyGrid/tree/master/src/UnoPropertyGrid.Sample) to see how to use UnoPropertyGrid in your own applications (Uno Platform and WinUI 3).
 
+There are several built-in editors for common types (string, numeric types, bool, enum, etc.) and you can also create custom editors for your own types.
+
 ## Current Status
 
-TODO
+Early preview (v0.x.y) releases are available on NuGet.
+
+The API is not yet stable and may change without a major version bump. Feedback is welcome to help shape the future of UnoPropertyGrid. 
 
 ## TODO Items Before v1.0.0
 
@@ -36,6 +47,10 @@ TODO
 - [ ] IME support improvements (currently functional but not fully polished)
 - [ ] Accessibility support (screen readers, keyboard navigation, etc.)
 
-## Credits & Third-Party
+## License
 
-TODO
+UnoPropertyGrid is licensed under the MIT License. See [LICENSE](LICENSE) for details.
+
+## Copyright
+
+Copyright (c) 2026 LeXtudio, Inc. All rights reserved.
