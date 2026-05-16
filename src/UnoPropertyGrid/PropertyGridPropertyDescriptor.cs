@@ -139,7 +139,10 @@ public sealed class PropertyGridPropertyDescriptor
             return value;
 
         if (IsBrushType(targetType) && IsBrushType(value.GetType()))
+        {
+            PropertyGridLogger.Log($"ConvertValue: brush conversion target={targetType.FullName} source={value.GetType().FullName}");
             return ConvertBrushObject(value, targetType);
+        }
 
         if (targetType.IsEnum)
             return value is string text
@@ -329,9 +332,14 @@ public sealed class PropertyGridPropertyDescriptor
 
         var color = GetBrushColor(value);
         if (color == null)
+        {
+            PropertyGridLogger.Log($"ConvertBrushObject: unable to extract color from {value.GetType().FullName}");
             return null;
+        }
 
-        return CreateBrushInstance(targetType, color.Value);
+        var brush = CreateBrushInstance(targetType, color.Value);
+        PropertyGridLogger.Log($"ConvertBrushObject: created {brush?.GetType().FullName ?? "null"} targetType={targetType.FullName} from color={color.Value:A:X2}{color.Value:R:X2}{color.Value:G:X2}{color.Value:B:X2}");
+        return brush;
     }
 
     static bool IsBrushType(Type type)
@@ -395,14 +403,20 @@ public sealed class PropertyGridPropertyDescriptor
             var targetColor = CreateColorInstance(targetColorType, color);
             var ctor = targetType.GetConstructor(new[] { targetColor.GetType() });
             if (ctor != null)
-                return ctor.Invoke(new[] { targetColor });
+            {
+                var brush = ctor.Invoke(new[] { targetColor });
+                PropertyGridLogger.Log($"CreateBrushInstance: used constructor on {targetType.FullName} with color type {targetColor.GetType().FullName}");
+                return brush;
+            }
 
             var instance = Activator.CreateInstance(targetType);
             instance?.GetType().GetProperty("Color")?.SetValue(instance, targetColor);
+            PropertyGridLogger.Log($"CreateBrushInstance: used default ctor and Color property on {targetType.FullName}");
             return instance;
         }
-        catch
+        catch (Exception ex)
         {
+            PropertyGridLogger.Log($"CreateBrushInstance: failed for {targetType.FullName} - {ex.Message}");
             return null;
         }
     }

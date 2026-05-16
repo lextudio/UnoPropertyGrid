@@ -27,6 +27,8 @@ static class BrushEditorContent
         var gradientStops = ExtractGradientStops(initial) ?? DefaultStops();
         var gradientAngle = initial is LinearGradientBrush lgbInit ? ComputeAngle(lgbInit) : 0.0;
 
+        PropertyGridLogger.Log($"BrushEditorContent.Create: initial={DescribeBrush(initial)} mode={initialMode}");
+
         var noneTab     = MakeTab(NoBrushIcon(),    "No brush",    BuildNoneContent());
         var solidTab    = MakeTab(SolidColorIcon(), "Solid color", BuildSolidContent(solidColor, c => { solidColor = c; onChange(new SolidColorBrush(c)); }));
         var gradientTab = MakeTab(GradientIcon(),   "Gradient",    BuildGradientContent(gradientStops, gradientAngle,
@@ -49,9 +51,11 @@ static class BrushEditorContent
         tabView.SelectionChanged += (_, _) =>
         {
             // Image tab manages its own onChange calls; other tabs emit immediately on switch
-            if ((BrushMode)tabView.SelectedIndex == BrushMode.Image)
+            var selectedMode = (BrushMode)tabView.SelectedIndex;
+            PropertyGridLogger.Log($"BrushEditorContent.TabChanged: mode={selectedMode}");
+            if (selectedMode == BrushMode.Image)
                 return;
-            onChange((BrushMode)tabView.SelectedIndex switch
+            onChange(selectedMode switch
             {
                 BrushMode.None     => null,
                 BrushMode.Solid    => new SolidColorBrush(solidColor),
@@ -166,13 +170,31 @@ static class BrushEditorContent
 
     static FrameworkElement BuildSolidContent(Color initialColor, Action<Color> onChanged)
     {
+        PropertyGridLogger.Log($"BrushEditorContent.BuildSolidContent: initialColor={initialColor.A:X2}{initialColor.R:X2}{initialColor.G:X2}{initialColor.B:X2}");
+
         var picker = new ColorPicker
         {
             Color = initialColor,
             IsAlphaEnabled = true,
             IsHexInputVisible = true
         };
-        picker.ColorChanged += (_, e) => onChanged(e.NewColor);
+
+        picker.Loaded += (_, _) =>
+        {
+            PropertyGridLogger.Log("BrushEditorContent.ColorPicker.Loaded");
+        };
+
+        picker.ColorChanged += (_, e) =>
+        {
+            PropertyGridLogger.Log($"BrushEditorContent.ColorPicker.ColorChanged: newColor={e.NewColor.A:X2}{e.NewColor.R:X2}{e.NewColor.G:X2}{e.NewColor.B:X2}");
+            onChanged(e.NewColor);
+        };
+
+        picker.Unloaded += (_, _) =>
+        {
+            PropertyGridLogger.Log("BrushEditorContent.ColorPicker.Unloaded");
+        };
+
         return picker;
     }
 
@@ -215,6 +237,8 @@ static class BrushEditorContent
             IsHexInputVisible = true
         };
 
+        PropertyGridLogger.Log($"BrushEditorContent.BuildGradientContent: initial stop color={stopColorPicker.Color.A:X2}{stopColorPicker.Color.R:X2}{stopColorPicker.Color.G:X2}{stopColorPicker.Color.B:X2}");
+
         List<GradientStop> CurrentStopList() =>
             stopBar.Stops.Select(s => new GradientStop { Color = s.Color, Offset = s.Offset }).ToList();
 
@@ -237,6 +261,7 @@ static class BrushEditorContent
 
         stopColorPicker.ColorChanged += (_, e) =>
         {
+            PropertyGridLogger.Log($"BrushEditorContent.GradientStop.ColorChanged: newColor={e.NewColor.A:X2}{e.NewColor.R:X2}{e.NewColor.G:X2}{e.NewColor.B:X2} syncing={syncing}");
             if (syncing) return;
             stopBar.UpdateSelectedStopColor(e.NewColor);
         };
@@ -403,6 +428,15 @@ static class BrushEditorContent
         ImageBrush                             => BrushMode.Image,
         _                                      => BrushMode.Solid
     };
+
+    static string DescribeBrush(Brush? brush)
+    {
+        if (brush == null)
+            return "null";
+        if (brush is SolidColorBrush solid)
+            return $"SolidColorBrush({solid.Color.A:X2}{solid.Color.R:X2}{solid.Color.G:X2}{solid.Color.B:X2})";
+        return brush.GetType().FullName ?? "Brush";
+    }
 
     static List<GradientStop>? ExtractGradientStops(Brush? brush) => brush switch
     {

@@ -27,11 +27,32 @@ static class PropertyGridEditorProviderUtilities
 
     public static void Commit(PropertyGridEditorContext context, object? value)
     {
+        PropertyGridLogger.Log($"Editor.Commit: setting value={DescribeValue(value)} for property={context.Descriptor.Name} targetType={context.Descriptor.PropertyType.FullName}");
         if (context.SetValue != null)
             context.SetValue(value);
         else
             context.Descriptor.SetValue(value);
+
         context.Value = context.Descriptor.GetValue();
+        PropertyGridLogger.Log($"Editor.Commit: read-back value={DescribeValue(context.Value)}");
+    }
+
+    public static string DescribeValue(object? value)
+    {
+        if (value == null)
+            return "null";
+        if (value is Brush brush)
+            return BrushDescription(brush);
+        return value.ToString() ?? value.GetType().FullName;
+    }
+
+    public static string BrushDescription(Brush brush)
+    {
+        if (brush is SolidColorBrush solid)
+        {
+            return $"SolidColorBrush({solid.Color.A:X2}{solid.Color.R:X2}{solid.Color.G:X2}{solid.Color.B:X2})";
+        }
+        return brush.GetType().FullName ?? "Brush";
     }
 
     public static string GetBrushName(object? value)

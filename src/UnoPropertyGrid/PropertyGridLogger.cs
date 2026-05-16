@@ -13,6 +13,7 @@ public static class PropertyGridLogger
     private static readonly string _logPath = Path.Combine(Path.GetTempPath(), "unopropertygrid.log");
     private static readonly object _lock = new();
 
+    public static string LogPath => _logPath;
     public static bool Enabled { get; set; }
 
     public static void Reset()

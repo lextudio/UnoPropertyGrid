@@ -18,6 +18,7 @@ sealed class BrushPropertyEditorProvider : IPropertyGridEditorProvider
     {
         var brush = context.Value as Brush;
         var previewBrush = brush ?? PropertyGridEditorProviderUtilities.GetBrushPreview(context.Value);
+        PropertyGridLogger.Log($"BrushPropertyEditorProvider.CreateEditor: property={context.Descriptor.Name} initialValue={PropertyGridEditorProviderUtilities.DescribeValue(context.Value)} previewBrush={PropertyGridEditorProviderUtilities.DescribeValue(previewBrush)}");
 
         // Checkerboard backdrop makes transparency and "no brush" visible
         var backdrop = CreateCheckerboardElement();
@@ -78,6 +79,7 @@ sealed class BrushPropertyEditorProvider : IPropertyGridEditorProvider
         {
             PropertyGridEditorProviderUtilities.Commit(context, b);
             var descriptorValue = context.Descriptor.GetValue();
+            PropertyGridLogger.Log($"BrushPropertyEditorProvider.Commit callback: descriptorValue={PropertyGridEditorProviderUtilities.DescribeValue(descriptorValue)} type={descriptorValue?.GetType().FullName ?? "null"}");
             var newBrush = PropertyGridEditorProviderUtilities.GetBrushPreview(descriptorValue);
             fill.Fill = BrushOrTransparent(newBrush);
             var isNowTransparent = IsEffectivelyTransparent(newBrush);
