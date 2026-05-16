@@ -12,7 +12,7 @@ static class PropertyGridEditorProviderUtilities
     public static readonly IReadOnlyList<string> CommonBrushes = ["No brush", "Transparent", "Black", "White", "Gray", "Red", "Green", "Blue", "Yellow"];
     public static readonly IReadOnlyList<string> FontWeights = ["Thin", "ExtraLight", "Light", "Normal", "Medium", "SemiBold", "Bold", "ExtraBold", "Black"];
     public static readonly IReadOnlyList<object> FontStyles = Enum.GetValues(typeof(FontStyle)).Cast<object>().ToArray();
-    public static readonly IReadOnlyList<object> FontStretches = Enum.GetValues(typeof(FontStretch)).Cast<object>().ToArray();
+    public static readonly IReadOnlyList<FontStretch> FontStretches = Enum.GetValues(typeof(FontStretch)).Cast<FontStretch>().ToArray();
 
     public static FrameworkElement CreateReadOnlyText(PropertyGridEditorContext context)
     {

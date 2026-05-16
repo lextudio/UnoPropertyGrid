@@ -1,5 +1,6 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Windows.UI.Text;
 
 namespace UnoPropertyGrid;
 
@@ -146,13 +147,33 @@ sealed class FontStretchPropertyEditorProvider : IPropertyGridEditorProvider
 
     public FrameworkElement CreateEditor(PropertyGridEditorContext context)
     {
-        var comboBox = new ComboBox
+        var comboBox = new ComboBox { HorizontalAlignment = HorizontalAlignment.Stretch };
+
+        foreach (FontStretch stretch in PropertyGridEditorProviderUtilities.FontStretches)
         {
-            ItemsSource = PropertyGridEditorProviderUtilities.FontStretches,
-            SelectedItem = context.Value,
-            HorizontalAlignment = HorizontalAlignment.Stretch
+            var item = new ComboBoxItem
+            {
+                Content = stretch.ToString(),
+                FontStretch = stretch,
+                Tag = stretch
+            };
+            comboBox.Items.Add(item);
+            if (stretch.Equals(context.Value))
+            {
+                comboBox.SelectedItem = item;
+                comboBox.FontStretch = stretch;
+            }
+        }
+
+        comboBox.SelectionChanged += (_, _) =>
+        {
+            if (comboBox.SelectedItem is ComboBoxItem selected && selected.Tag is FontStretch selectedStretch)
+            {
+                comboBox.FontStretch = selectedStretch;
+                PropertyGridEditorProviderUtilities.Commit(context, selectedStretch);
+            }
         };
-        comboBox.SelectionChanged += (_, _) => PropertyGridEditorProviderUtilities.Commit(context, comboBox.SelectedItem);
+
         return comboBox;
     }
 }
