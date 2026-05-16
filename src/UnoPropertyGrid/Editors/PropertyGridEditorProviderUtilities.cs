@@ -38,35 +38,97 @@ static class PropertyGridEditorProviderUtilities
     {
         if (value == null)
             return "No brush";
-        if (value is SolidColorBrush solidColorBrush)
-            return GetColorName(solidColorBrush.Color);
+        if (TryGetBrushColor(value, out var color))
+            return GetColorName(color);
         return value.ToString() ?? "Custom brush";
     }
 
     public static Brush GetBrushPreview(object? value)
     {
-        return value as Brush ?? new SolidColorBrush(Colors.Transparent);
+        if (value is Brush brush)
+            return brush;
+
+        if (TryGetBrushColor(value, out var color))
+            return new SolidColorBrush(color);
+
+        return new SolidColorBrush(Colors.Transparent);
+    }
+
+    static bool TryGetBrushColor(object? value, out Color color)
+    {
+        color = default;
+        if (value == null)
+            return false;
+
+        if (value is SolidColorBrush solidColorBrush)
+        {
+            color = solidColorBrush.Color;
+            return true;
+        }
+
+        var type = value.GetType();
+        if (type.FullName == "Windows.UI.Xaml.Media.SolidColorBrush" || type.FullName == "Microsoft.UI.Xaml.Media.SolidColorBrush")
+        {
+            var colorProperty = type.GetProperty("Color");
+            if (colorProperty?.GetValue(value) is Color brushColor)
+            {
+                color = brushColor;
+                return true;
+            }
+
+            if (colorProperty?.GetValue(value) is { } colorValue)
+            {
+                return TryGetColorFromObject(colorValue, out color);
+            }
+        }
+
+        return false;
+    }
+
+    static bool TryGetColorFromObject(object value, out Color color)
+    {
+        color = default;
+        var type = value.GetType();
+        if (type.FullName == "Windows.UI.Color" || type.FullName == "Microsoft.UI.Color")
+        {
+            var a = (byte)(type.GetProperty("A")?.GetValue(value) ?? 0);
+            var r = (byte)(type.GetProperty("R")?.GetValue(value) ?? 0);
+            var g = (byte)(type.GetProperty("G")?.GetValue(value) ?? 0);
+            var b = (byte)(type.GetProperty("B")?.GetValue(value) ?? 0);
+            color = Color.FromArgb(a, r, g, b);
+            return true;
+        }
+
+        return false;
     }
 
     public static string GetFontWeightName(object? value)
     {
-        if (value is not FontWeight weight)
-            return "Normal";
+        if (value is FontWeight weight)
+            return GetFontWeightName(weight.Weight);
 
-        return weight.Weight switch
+        if (value?.GetType().FullName == "Microsoft.UI.Text.FontWeight")
         {
-            100 => "Thin",
-            200 => "ExtraLight",
-            300 => "Light",
-            400 => "Normal",
-            500 => "Medium",
-            600 => "SemiBold",
-            700 => "Bold",
-            800 => "ExtraBold",
-            900 => "Black",
-            _ => weight.Weight.ToString()
-        };
+            var weightValue = (ushort?)(value.GetType().GetProperty("Weight")?.GetValue(value));
+            return GetFontWeightName(weightValue ?? 400);
+        }
+
+        return "Normal";
     }
+
+    static string GetFontWeightName(ushort weight) => weight switch
+    {
+        100 => "Thin",
+        200 => "ExtraLight",
+        300 => "Light",
+        400 => "Normal",
+        500 => "Medium",
+        600 => "SemiBold",
+        700 => "Bold",
+        800 => "ExtraBold",
+        900 => "Black",
+        _ => weight.ToString()
+    };
 
     public static IReadOnlyList<string> LoadSystemFontFamilies()
     {

@@ -17,10 +17,11 @@ sealed class BrushPropertyEditorProvider : IPropertyGridEditorProvider
     public FrameworkElement CreateEditor(PropertyGridEditorContext context)
     {
         var brush = context.Value as Brush;
+        var previewBrush = brush ?? PropertyGridEditorProviderUtilities.GetBrushPreview(context.Value);
 
         // Checkerboard backdrop makes transparency and "no brush" visible
         var backdrop = CreateCheckerboardElement();
-        var fill = new Rectangle { Fill = BrushOrTransparent(brush) };
+        var fill = new Rectangle { Fill = BrushOrTransparent(previewBrush) };
 
         var preview = new Grid
         {
@@ -76,10 +77,11 @@ sealed class BrushPropertyEditorProvider : IPropertyGridEditorProvider
         var editorContent = BrushEditorContent.Create(brush, b =>
         {
             PropertyGridEditorProviderUtilities.Commit(context, b);
-            var newBrush = context.Descriptor.GetValue() as Brush;
+            var descriptorValue = context.Descriptor.GetValue();
+            var newBrush = PropertyGridEditorProviderUtilities.GetBrushPreview(descriptorValue);
             fill.Fill = BrushOrTransparent(newBrush);
             var isNowTransparent = IsEffectivelyTransparent(newBrush);
-            noBrushLabel.Visibility = newBrush == null ? Visibility.Visible : Visibility.Collapsed;
+            noBrushLabel.Visibility = descriptorValue == null ? Visibility.Visible : Visibility.Collapsed;
             backdrop.Visibility = isNowTransparent ? Visibility.Visible : Visibility.Collapsed;
         });
 

@@ -138,6 +138,9 @@ public sealed class PropertyGridPropertyDescriptor
         if (targetType.IsInstanceOfType(value))
             return value;
 
+        if (IsBrushType(targetType) && IsBrushType(value.GetType()))
+            return ConvertBrushObject(value, targetType);
+
         if (targetType.IsEnum)
             return value is string text
                 ? Enum.Parse(targetType, text)
@@ -145,15 +148,39 @@ public sealed class PropertyGridPropertyDescriptor
 
         if (value is string stringValue)
         {
-            if (targetType == typeof(FontFamily))
-                return new FontFamily(stringValue);
+            if (targetType == typeof(FontFamily) || targetType == typeof(Microsoft.UI.Xaml.Media.FontFamily))
+                return new Microsoft.UI.Xaml.Media.FontFamily(stringValue);
 
-            if (targetType == typeof(FontWeight))
-                return ConvertFontWeight(stringValue);
+            if (targetType == typeof(FontWeight) || targetType.FullName == "Microsoft.UI.Text.FontWeight")
+                return ConvertFontWeight(stringValue, targetType);
 
-            if (typeof(Brush).IsAssignableFrom(targetType))
-                return ConvertBrush(stringValue);
+            if (targetType == typeof(FontStyle) || targetType.FullName == "Microsoft.UI.Text.FontStyle")
+                return ConvertFontStyle(stringValue, targetType);
+
+            if (targetType == typeof(FontStretch) || targetType.FullName == "Microsoft.UI.Text.FontStretch")
+                return ConvertFontStretch(stringValue, targetType);
+
+            if (IsBrushType(targetType))
+                return ConvertBrush(stringValue, targetType);
         }
+
+        if (value is FontWeight winuiFontWeight && targetType.FullName == "Microsoft.UI.Text.FontWeight")
+            return ConvertFontWeight(winuiFontWeight, targetType);
+
+        if (value.GetType().FullName == "Microsoft.UI.Text.FontWeight" && targetType == typeof(FontWeight))
+            return ConvertFontWeight(value, targetType);
+
+        if (value is FontStyle winuiFontStyle && targetType.FullName == "Microsoft.UI.Text.FontStyle")
+            return ConvertFontStyle(winuiFontStyle, targetType);
+
+        if (value.GetType().FullName == "Microsoft.UI.Text.FontStyle" && targetType == typeof(FontStyle))
+            return ConvertFontStyle(value, targetType);
+
+        if (value is FontStretch winuiFontStretch && targetType.FullName == "Microsoft.UI.Text.FontStretch")
+            return ConvertFontStretch(winuiFontStretch, targetType);
+
+        if (value.GetType().FullName == "Microsoft.UI.Text.FontStretch" && targetType == typeof(FontStretch))
+            return ConvertFontStretch(value, targetType);
 
         // TypeDescriptor.GetConverter(Type) is safe — it doesn't touch COM descriptors
         var converter = TypeDescriptor.GetConverter(targetType);
@@ -166,7 +193,7 @@ public sealed class PropertyGridPropertyDescriptor
         return Convert.ChangeType(value, targetType, CultureInfo.CurrentCulture);
     }
 
-    static FontWeight ConvertFontWeight(string value)
+    static object ConvertFontWeight(string value, Type targetType)
     {
         var namedWeight = value.ToLowerInvariant() switch
         {
@@ -182,24 +209,211 @@ public sealed class PropertyGridPropertyDescriptor
             _ => 0
         };
 
-        if (namedWeight != 0)
-            return new FontWeight { Weight = (ushort)namedWeight };
+        if (namedWeight == 0 && ushort.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var numericWeight))
+            namedWeight = numericWeight;
 
-        if (ushort.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var numericWeight))
-            return new FontWeight { Weight = numericWeight };
+        if (namedWeight == 0)
+            namedWeight = 400;
 
-        return new FontWeight { Weight = 400 };
+        return CreateFontWeight(targetType, (ushort)namedWeight);
     }
 
-    static Brush? ConvertBrush(string value)
+    static object ConvertFontWeight(FontWeight value, Type targetType)
+    {
+        if (targetType == typeof(FontWeight))
+            return new FontWeight { Weight = value.Weight };
+
+        if (targetType.FullName == "Microsoft.UI.Text.FontWeight")
+            return CreateFontStruct(targetType, "Weight", value.Weight);
+
+        return value;
+    }
+
+    static object ConvertFontWeight(object value, Type targetType)
+    {
+        if (value.GetType().FullName == "Microsoft.UI.Text.FontWeight")
+        {
+            var weight = (ushort)(value.GetType().GetProperty("Weight")?.GetValue(value) ?? 400);
+            return targetType == typeof(FontWeight)
+                ? new FontWeight { Weight = weight }
+                : CreateFontStruct(targetType, "Weight", weight);
+        }
+
+        return value;
+    }
+
+    static object CreateFontWeight(Type targetType, ushort weight)
+    {
+        if (targetType == typeof(FontWeight))
+            return new FontWeight { Weight = weight };
+
+        if (targetType.FullName == "Microsoft.UI.Text.FontWeight")
+            return CreateFontStruct(targetType, "Weight", weight);
+
+        return Activator.CreateInstance(targetType)!;
+    }
+
+    static object ConvertFontStyle(string value, Type targetType)
+    {
+        if (targetType == typeof(FontStyle))
+        {
+            return Enum.TryParse<FontStyle>(value, true, out var parsed) ? parsed : FontStyle.Normal;
+        }
+
+        if (targetType.FullName == "Microsoft.UI.Text.FontStyle")
+        {
+            return Enum.Parse(targetType, value, true)!;
+        }
+
+        return Activator.CreateInstance(targetType)!;
+    }
+
+    static object ConvertFontStyle(object value, Type targetType)
+    {
+        if (targetType == typeof(FontStyle))
+        {
+            if (value.GetType().FullName == "Microsoft.UI.Text.FontStyle")
+                return Enum.Parse(typeof(FontStyle), value.ToString()!, true)!;
+            return value;
+        }
+
+        if (targetType.FullName == "Microsoft.UI.Text.FontStyle")
+        {
+            return Enum.Parse(targetType, value.ToString()!, true)!;
+        }
+
+        return value;
+    }
+
+    static object ConvertFontStretch(string value, Type targetType)
+    {
+        if (targetType == typeof(FontStretch))
+        {
+            return Enum.TryParse<FontStretch>(value, true, out var parsed) ? parsed : default(FontStretch);
+        }
+
+        if (targetType.FullName == "Microsoft.UI.Text.FontStretch")
+        {
+            return Enum.Parse(targetType, value, true)!;
+        }
+
+        return Activator.CreateInstance(targetType)!;
+    }
+
+    static object ConvertFontStretch(object value, Type targetType)
+    {
+        if (targetType == typeof(FontStretch))
+        {
+            return Enum.Parse(typeof(FontStretch), value.ToString()!, true)!;
+        }
+
+        if (targetType.FullName == "Microsoft.UI.Text.FontStretch")
+        {
+            return Enum.Parse(targetType, value.ToString()!, true)!;
+        }
+
+        return value;
+    }
+
+    static object CreateFontStruct(Type targetType, string propertyName, object propertyValue)
+    {
+        var instance = Activator.CreateInstance(targetType)!;
+        targetType.GetProperty(propertyName)?.SetValue(instance, propertyValue);
+        return instance;
+    }
+
+    static object? ConvertBrushObject(object value, Type targetType)
+    {
+        if (targetType.IsInstanceOfType(value))
+            return value;
+
+        var color = GetBrushColor(value);
+        if (color == null)
+            return null;
+
+        return CreateBrushInstance(targetType, color.Value);
+    }
+
+    static bool IsBrushType(Type type)
+    {
+        var fullName = type.FullName;
+        return typeof(Brush).IsAssignableFrom(type)
+            || fullName == "Windows.UI.Xaml.Media.Brush"
+            || fullName == "Microsoft.UI.Xaml.Media.Brush"
+            || fullName == "Windows.UI.Xaml.Media.SolidColorBrush"
+            || fullName == "Microsoft.UI.Xaml.Media.SolidColorBrush";
+    }
+
+    static object? ConvertBrush(string value, Type targetType)
     {
         if (string.Equals(value, "No brush", StringComparison.OrdinalIgnoreCase)
             || string.Equals(value, "Transparent", StringComparison.OrdinalIgnoreCase))
-            return value.Equals("Transparent", StringComparison.OrdinalIgnoreCase)
-                ? new SolidColorBrush(Colors.Transparent)
-                : null;
+        {
+            var transparentColor = Colors.Transparent;
+            return CreateBrushInstance(targetType, transparentColor);
+        }
 
-        return new SolidColorBrush(ConvertColor(value));
+        var color = ConvertColor(value);
+        return CreateBrushInstance(targetType, color);
+    }
+
+    static Color? GetBrushColor(object brush)
+    {
+        var type = brush.GetType();
+        var colorProperty = type.GetProperty("Color");
+        if (colorProperty == null)
+            return null;
+
+        var colorValue = colorProperty.GetValue(brush);
+        if (colorValue == null)
+            return null;
+
+        if (colorValue is Color uiColor)
+            return uiColor;
+
+        var colorType = colorValue.GetType();
+        if (colorType.FullName == "Microsoft.UI.Color" || colorType.FullName == "Windows.UI.Color")
+        {
+            var a = (byte)(colorType.GetProperty("A")?.GetValue(colorValue) ?? 255);
+            var r = (byte)(colorType.GetProperty("R")?.GetValue(colorValue) ?? 0);
+            var g = (byte)(colorType.GetProperty("G")?.GetValue(colorValue) ?? 0);
+            var b = (byte)(colorType.GetProperty("B")?.GetValue(colorValue) ?? 0);
+            return Color.FromArgb(a, r, g, b);
+        }
+
+        return null;
+    }
+
+    static object? CreateBrushInstance(Type targetType, Color color)
+    {
+        try
+        {
+            var targetColorType = targetType.Assembly.GetType("Microsoft.UI.Color")
+                ?? targetType.Assembly.GetType("Windows.UI.Color")
+                ?? typeof(Color);
+
+            var targetColor = CreateColorInstance(targetColorType, color);
+            var ctor = targetType.GetConstructor(new[] { targetColor.GetType() });
+            if (ctor != null)
+                return ctor.Invoke(new[] { targetColor });
+
+            var instance = Activator.CreateInstance(targetType);
+            instance?.GetType().GetProperty("Color")?.SetValue(instance, targetColor);
+            return instance;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    static object CreateColorInstance(Type colorType, Color sourceColor)
+    {
+        if (colorType.FullName == "Microsoft.UI.Color")
+            return Activator.CreateInstance(colorType, sourceColor.A, sourceColor.R, sourceColor.G, sourceColor.B)!;
+        if (colorType.FullName == "Windows.UI.Color")
+            return Activator.CreateInstance(colorType, sourceColor.A, sourceColor.R, sourceColor.G, sourceColor.B)!;
+        return sourceColor;
     }
 
     static Color ConvertColor(string value)

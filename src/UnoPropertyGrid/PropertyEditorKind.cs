@@ -30,11 +30,11 @@ public static class PropertyEditorKindExtensions
             return PropertyEditorKind.Brush;
         if (baseType == typeof(Microsoft.UI.Xaml.Media.FontFamily))
             return PropertyEditorKind.FontFamily;
-        if (baseType == typeof(Windows.UI.Text.FontWeight))
+        if (baseType == typeof(Windows.UI.Text.FontWeight) || baseType.FullName == "Microsoft.UI.Text.FontWeight")
             return PropertyEditorKind.FontWeight;
-        if (baseType == typeof(Windows.UI.Text.FontStyle))
+        if (baseType == typeof(Windows.UI.Text.FontStyle) || baseType.FullName == "Microsoft.UI.Text.FontStyle")
             return PropertyEditorKind.FontStyle;
-        if (baseType == typeof(Windows.UI.Text.FontStretch))
+        if (baseType == typeof(Windows.UI.Text.FontStretch) || baseType.FullName == "Microsoft.UI.Text.FontStretch")
             return PropertyEditorKind.FontStretch;
         if (baseType.IsEnum)
             return PropertyEditorKind.Enum;
