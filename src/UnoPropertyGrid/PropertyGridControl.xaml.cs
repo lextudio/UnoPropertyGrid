@@ -9,6 +9,7 @@ using Microsoft.UI.Xaml.Shapes;
 using Windows.UI;
 using Windows.UI.Text;
 using Button = Microsoft.UI.Xaml.Controls.Button;
+using TextBox = LeXtudio.UI.Controls.TextBox;
 using LeXtudio.UnoPropertyGrid.DesignTools.Extensibility.PropertyEditing;
 
 namespace UnoPropertyGrid;
