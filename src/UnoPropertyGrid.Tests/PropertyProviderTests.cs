@@ -118,9 +118,9 @@ public sealed class PropertyProviderTests
         static void Test()
         {
         var target = new SampleComponent();
-        target.FontFamily = new FontFamily("Segoe UI");
+        target.FontFamily = new FontFamily("Open Sans");
         Assert.That(target.FontFamily, Is.Not.Null);
-        Assert.That(target.FontFamily!.Source, Is.EqualTo("Segoe UI"));
+        Assert.That(target.FontFamily!.Source, Is.EqualTo("Open Sans"));
         target.FontFamily = null;
 
         var property = new TypeDescriptorPropertyProvider()
@@ -130,11 +130,11 @@ public sealed class PropertyProviderTests
 
         Assert.That(viewModel.EditorKind, Is.EqualTo(PropertyEditorKind.FontFamily));
 
-        viewModel.FontFamilyValue = "Consolas";
+        viewModel.FontFamilyValue = "Open Sans";
 
         Assert.That(viewModel.HasError, Is.False, viewModel.Error);
         Assert.That(target.FontFamily, Is.Not.Null);
-        Assert.That(target.FontFamily!.Source, Is.EqualTo("Consolas"));
+        Assert.That(target.FontFamily!.Source, Is.EqualTo("Open Sans"));
         }
     }
 
