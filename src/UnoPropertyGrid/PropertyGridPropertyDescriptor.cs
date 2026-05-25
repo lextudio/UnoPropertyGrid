@@ -16,6 +16,16 @@ public sealed class PropertyGridPropertyDescriptor
     readonly PropertyInfo? _property;
     readonly PropertyDescriptor? _descriptor;
 
+    // Lambda-mode fields (AOT-safe path)
+    readonly Func<object, object?>? _lambdaGetter;
+    readonly Action<object, object?>? _lambdaSetter;
+    readonly string? _lambdaName;
+    readonly Type? _lambdaPropertyType;
+    readonly bool _lambdaIsReadOnly;
+    readonly IReadOnlyList<Attribute> _lambdaAttributes = [];
+
+    bool IsLambdaMode => _lambdaGetter != null;
+
     public PropertyGridPropertyDescriptor(object component, PropertyInfo property)
         : this(component, property, null)
     {
@@ -34,9 +44,37 @@ public sealed class PropertyGridPropertyDescriptor
         _descriptor = descriptor ?? throw new ArgumentNullException(nameof(descriptor));
     }
 
+    /// <summary>AOT-safe constructor using pre-typed lambda accessors instead of reflection.</summary>
+    public PropertyGridPropertyDescriptor(
+        object component,
+        string name,
+        Type propertyType,
+        Func<object, object?> getter,
+        Action<object, object?>? setter = null,
+        string? displayName = null,
+        string? category = null,
+        string? description = null,
+        bool isReadOnly = false,
+        IReadOnlyList<Attribute>? attributes = null)
+    {
+        _component = component ?? throw new ArgumentNullException(nameof(component));
+        _lambdaName = name ?? throw new ArgumentNullException(nameof(name));
+        _lambdaPropertyType = propertyType ?? throw new ArgumentNullException(nameof(propertyType));
+        _lambdaGetter = getter ?? throw new ArgumentNullException(nameof(getter));
+        _lambdaSetter = setter;
+        _lambdaIsReadOnly = isReadOnly || setter is null;
+
+        var attrs = new List<Attribute>(attributes ?? []);
+        if (displayName != null) attrs.Add(new DisplayNameAttribute(displayName));
+        if (category != null) attrs.Add(new CategoryAttribute(category));
+        if (description != null) attrs.Add(new DescriptionAttribute(description));
+        if (_lambdaIsReadOnly) attrs.Add(new ReadOnlyAttribute(true));
+        _lambdaAttributes = attrs;
+    }
+
     public object Component => _component;
 
-    public string Name => _descriptor?.Name ?? _property!.Name;
+    public string Name => _lambdaName ?? _descriptor?.Name ?? _property!.Name;
 
     public string DisplayName =>
         _descriptor?.DisplayName is { Length: > 0 } descriptorName && descriptorName != Name
@@ -57,16 +95,18 @@ public sealed class PropertyGridPropertyDescriptor
             ? descriptorDescription
             : Attributes.OfType<DescriptionAttribute>().LastOrDefault()?.Description ?? string.Empty;
 
-    public Type PropertyType => _descriptor?.PropertyType ?? _property!.PropertyType;
+    public Type PropertyType => _lambdaPropertyType ?? _descriptor?.PropertyType ?? _property!.PropertyType;
 
     public bool IsReadOnly =>
-        _descriptor?.IsReadOnly == true
-        || (_property != null && !_property.CanWrite)
-        || Attributes.OfType<ReadOnlyAttribute>().LastOrDefault()?.IsReadOnly == true;
+        IsLambdaMode
+            ? _lambdaIsReadOnly
+            : _descriptor?.IsReadOnly == true
+              || (_property != null && !_property.CanWrite)
+              || Attributes.OfType<ReadOnlyAttribute>().LastOrDefault()?.IsReadOnly == true;
 
     public bool IsBrowsable =>
         Attributes.OfType<BrowsableAttribute>().LastOrDefault()?.Browsable
-        ?? _descriptor?.IsBrowsable
+        ?? (IsLambdaMode ? true : _descriptor?.IsBrowsable)
         ?? true;
 
     public IEnumerable<Attribute> Attributes =>
@@ -74,6 +114,15 @@ public sealed class PropertyGridPropertyDescriptor
 
     IEnumerable<Attribute> GetAttributes()
     {
+        if (IsLambdaMode)
+        {
+            foreach (var attribute in _lambdaAttributes)
+                yield return attribute;
+            foreach (var attribute in AttributeTableStore.GetCustomAttributes(_component.GetType(), Name))
+                yield return attribute;
+            yield break;
+        }
+
         var localAttributes = _descriptor?.Attributes.Cast<Attribute>() ?? _property!.GetCustomAttributes().OfType<Attribute>();
         foreach (var attribute in localAttributes)
             yield return attribute;
@@ -84,7 +133,7 @@ public sealed class PropertyGridPropertyDescriptor
 
     public object? GetDefaultValue()
     {
-        if (_component is DependencyObject dependencyObject && TryGetDependencyPropertyDefaultValue(dependencyObject, out var dependencyDefaultValue))
+        if (!IsLambdaMode && _component is DependencyObject dependencyObject && TryGetDependencyPropertyDefaultValue(dependencyObject, out var dependencyDefaultValue))
             return dependencyDefaultValue;
 
         var defaultValue = Attributes.OfType<DefaultValueAttribute>().FirstOrDefault();
@@ -108,6 +157,8 @@ public sealed class PropertyGridPropertyDescriptor
 
     public object? GetValue()
     {
+        if (IsLambdaMode)
+            return _lambdaGetter!(_component);
         return _property != null
             ? _property.GetValue(_component)
             : _descriptor!.GetValue(_component);
@@ -120,7 +171,9 @@ public sealed class PropertyGridPropertyDescriptor
 
         var converted = ConvertValue(value);
         PropertyGridLogger.Log($"Descriptor [{Name}]: SetValue component={_component?.GetType().Name}, value={value}, converted={converted}");
-        if (_property != null)
+        if (IsLambdaMode)
+            _lambdaSetter!(_component!, converted);
+        else if (_property != null)
             _property.SetValue(_component, converted);
         else
             _descriptor!.SetValue(_component, converted);

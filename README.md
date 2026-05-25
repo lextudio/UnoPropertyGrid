@@ -26,13 +26,52 @@ Current scope:
 
 ## Get Started
 
-The main deliverable is a NuGet package:
+Two NuGet packages are available:
 
 - [![NuGet](https://img.shields.io/nuget/v/LeXtudio.UnoPropertyGrid.svg?label=LeXtudio.UnoPropertyGrid)](https://www.nuget.org/packages/LeXtudio.UnoPropertyGrid) The core property grid component.
+- [![NuGet](https://img.shields.io/nuget/v/LeXtudio.UnoPropertyGrid.Generator.svg?label=LeXtudio.UnoPropertyGrid.Generator)](https://www.nuget.org/packages/LeXtudio.UnoPropertyGrid.Generator) Optional Roslyn source generator for AOT-safe property discovery (see [AOT support](#aot-support) below).
 
-Study [the sample project](https://github.com/lextudio/UnoPropertyGrid/tree/master/src/UnoPropertyGrid.Sample) to see how to use UnoPropertyGrid in your own applications (Uno Platform and WinUI 3).
+### Default usage (reflection-based)
+
+```xml
+xmlns:pg="using:UnoPropertyGrid"
+
+<pg:PropertyGridControl SelectedObject="{x:Bind MyObject}" />
+```
+
+The property grid discovers properties automatically via `TypeDescriptor` and reflection. No extra setup is required for desktop targets.
+
+Study [the sample project](https://github.com/lextudio/UnoPropertyGrid/tree/master/src/UnoPropertyGrid.Sample) to see custom editors and design-time metadata in action.
 
 There are several built-in editors for common types (string, numeric types, bool, enum, etc.) and you can also create custom editors for your own types.
+
+### AOT support
+
+For NativeAOT, trimmed Blazor WebAssembly, or any target where the trimmer removes unreferenced metadata, add the companion source generator:
+
+```
+dotnet add package LeXtudio.UnoPropertyGrid
+dotnet add package LeXtudio.UnoPropertyGrid.Generator
+```
+
+Annotate each type you want to inspect at the assembly level (typically in the same file that declares the type, or in a dedicated `AssemblyInfo.cs`):
+
+```csharp
+[assembly: UnoPropertyGrid.GeneratePropertyGridDescriptors(typeof(MyApp.DeviceSettings))]
+[assembly: UnoPropertyGrid.GeneratePropertyGridDescriptors(typeof(MyApp.NetworkConfig))]
+```
+
+Then swap the default provider before assigning `SelectedObject`:
+
+```csharp
+// GeneratedPropertyGridDescriptors is emitted by the source generator at compile time.
+PropertyGrid.PropertyProvider = GeneratedPropertyGridDescriptors.CreateProvider();
+PropertyGrid.SelectedObject = myDeviceSettings;
+```
+
+The generator reads `[Category]`, `[Description]`, `[DisplayName]`, `[ReadOnly]`, and `[Browsable]` attributes at compile time and emits typed lambda accessors — no `PropertyInfo.GetValue` or `TypeDescriptor` is involved in property discovery at runtime.
+
+Study [the AOT sample project](https://github.com/lextudio/UnoPropertyGrid/tree/master/src/UnoPropertyGrid.Sample.Aot) for a complete working example.
 
 ## Current Status
 

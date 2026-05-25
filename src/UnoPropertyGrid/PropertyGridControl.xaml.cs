@@ -74,7 +74,7 @@ public sealed partial class PropertyGridControl : UserControl, INotifyPropertyCh
     readonly ObservableCollection<PropertyGridCategoryViewModel> _categories = new();
     readonly ObservableCollection<PropertyGridEventViewModel> _events = new();
     readonly ObservableCollection<PropertyGridEventViewModel> _visibleEvents = new();
-    readonly IPropertyGridPropertyProvider _propertyProvider = new TypeDescriptorPropertyProvider();
+    IPropertyGridPropertyProvider _propertyProvider = new TypeDescriptorPropertyProvider();
     readonly IPropertyGridEventProvider _eventProvider = new ReflectionEventProvider();
     readonly IPropertyGridEditorProvider _builtInEditorProvider = new BuiltInPropertyEditorProvider();
     readonly Dictionary<string, bool> _categoryExpansion = new(StringComparer.Ordinal);
@@ -147,6 +147,23 @@ public sealed partial class PropertyGridControl : UserControl, INotifyPropertyCh
     public IList<IPropertyGridEditorProvider> EditorProviders { get; } = new List<IPropertyGridEditorProvider>();
 
     public IPropertyGridEventService? EventService { get; set; }
+
+    /// <summary>
+    /// Overrides the default reflection-based property provider.
+    /// Assign a <see cref="LambdaPropertyProvider"/> (typically produced by
+    /// <c>GeneratedPropertyGridDescriptors.CreateProvider()</c>) to make the
+    /// property grid AOT-safe for known component types.
+    /// Setting this property refreshes the current selected object.
+    /// </summary>
+    public IPropertyGridPropertyProvider PropertyProvider
+    {
+        get => _propertyProvider;
+        set
+        {
+            _propertyProvider = value ?? throw new ArgumentNullException(nameof(value));
+            RefreshMembers(SelectedObject);
+        }
+    }
 
     public string ObjectName => GetObjectName(SelectedObject);
     public string ObjectTypeName => SelectedObject?.GetType().Name ?? string.Empty;

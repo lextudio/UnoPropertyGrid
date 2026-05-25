@@ -6,11 +6,13 @@
 
     <OutputType>Exe</OutputType>
     <UnoSingleProject>true</UnoSingleProject>
-    <ApplicationTitle>UnoPropertyGrid Custom Editor Sample</ApplicationTitle>
-    <ApplicationId>com.lextudio.unopropertygrid.sample</ApplicationId>
-    <UnoFeatures>SkiaRenderer;Svg</UnoFeatures>
+    <ApplicationTitle>UnoPropertyGrid AOT Sample</ApplicationTitle>
+    <ApplicationId>com.lextudio.unopropertygrid.sample.aot</ApplicationId>
+    <UnoFeatures>SkiaRenderer</UnoFeatures>
     <Nullable>enable</Nullable>
     <LangVersion>latest</LangVersion>
+    <!-- Write generator output to obj/.../generated/ so the emitted code is visible for review. -->
+    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
     <UseNuGetPackage>false</UseNuGetPackage>
   </PropertyGroup>
 
@@ -26,12 +28,23 @@
 
   <ItemGroup Condition="'$(UseNuGetPackage)' != 'true'">
     <ProjectReference Include="..\UnoPropertyGrid\UnoPropertyGrid.csproj" />
-    <ProjectReference Include="..\UnoPropertyGrid.Sample.DesignTools\UnoPropertyGrid.Sample.DesignTools.csproj" Condition="'$(Configuration)' == 'Debug'" />
-    <ProjectReference Include="..\UnoPropertyGrid.Sample.DesignTools\UnoPropertyGrid.Sample.DesignTools.csproj" Condition="'$(Configuration)' != 'Debug'" ReferenceOutputAssembly="false" PrivateAssets="all" />
+    <!--
+      Reference the generator so the Roslyn analyser runs during this project's build.
+      OutputItemType + ReferenceOutputAssembly keep the generator DLL out of the
+      runtime output while still feeding it to the compiler as an analyser.
+    -->
+    <ProjectReference Include="..\UnoPropertyGrid.Generator\UnoPropertyGrid.Generator.csproj"
+                      OutputItemType="Analyzer"
+                      ReferenceOutputAssembly="false" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(UseNuGetPackage)' == 'true'">
     <PackageReference Include="LeXtudio.UnoPropertyGrid" />
+    <!--
+      The generator NuGet package ships the analyser DLL under analyzers/dotnet/cs/,
+      which NuGet wires up automatically — no OutputItemType needed.
+    -->
+    <PackageReference Include="LeXtudio.UnoPropertyGrid.Generator" />
   </ItemGroup>
 
   <ItemGroup>

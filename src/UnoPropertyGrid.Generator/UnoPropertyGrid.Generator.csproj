@@ -1,0 +1,59 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsRoslynComponent>true</IsRoslynComponent>
+    <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
+    <RootNamespace>UnoPropertyGrid.Generator</RootNamespace>
+
+    <!-- NuGet package metadata -->
+    <PackageId>LeXtudio.UnoPropertyGrid.Generator</PackageId>
+    <Version>$(GitVersion_SemVer)</Version>
+    <Description>Roslyn source generator that emits AOT-safe property grid descriptors for types annotated with GeneratePropertyGridDescriptorsAttribute.</Description>
+    <Authors>LeXtudio</Authors>
+    <Company>LeXtudio</Company>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/lextudio/UnoPropertyGrid</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/lextudio/UnoPropertyGrid</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageIcon>company_logo_512.png</PackageIcon>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+
+    <!-- Generator packages must not contribute runtime assemblies to the consumer graph -->
+    <DevelopmentDependency>true</DevelopmentDependency>
+
+    <!-- Suppress default lib/ output; DLL is placed under analyzers/dotnet/cs/ instead -->
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+
+    <IsPackable>true</IsPackable>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    <!-- Symbols are embedded in the .nupkg alongside the DLL under analyzers/dotnet/cs/;
+         a separate .snupkg would be empty because IncludeBuildOutput=false. -->
+    <IncludeSymbols>false</IncludeSymbols>
+    <Deterministic>true</Deterministic>
+    <ContinuousIntegrationBuild Condition="'$(CI)' == 'true'">true</ContinuousIntegrationBuild>
+    <NoWarn>$(NoWarn);NU5128</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" PrivateAssets="all" />
+  </ItemGroup>
+
+  <!-- Place the generator DLL where NuGet expects Roslyn source generators. -->
+  <!-- _GetPackageFiles is the correct hook; GenerateNuspec fires too late. -->
+  <Target Name="PackAnalyzerAssembly" BeforeTargets="_GetPackageFiles" DependsOnTargets="Build">
+    <ItemGroup>
+      <None Include="$(TargetPath)" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
+      <None Include="$(TargetDir)$(AssemblyName).pdb" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false"
+            Condition="'$(DebugType)' != 'none' and Exists('$(TargetDir)$(AssemblyName).pdb')" />
+    </ItemGroup>
+  </Target>
+
+  <ItemGroup>
+    <None Include="..\..\images\company_logo_512.png" Pack="true" PackagePath="/" />
+    <None Include="README.md" Pack="true" PackagePath="/" />
+  </ItemGroup>
+</Project>

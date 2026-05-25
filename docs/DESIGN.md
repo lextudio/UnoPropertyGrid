@@ -665,6 +665,130 @@ Known current limitations to track during redesign:
 - Complex types are read-only until custom editor factories and nested expansion are implemented.
 - The current category combo box is useful for filtering but should be replaced by Visual Studio-style category expanders.
 
+## AOT Compatibility
+
+### The Reflection Problem
+
+The default discovery path — `TypeDescriptor.GetProperties(component)` followed by reflection-based `get`/`set` — relies on runtime type inspection that trimmers and AOT compilers cannot statically analyze. On .NET Native, NativeAOT, or Blazor WebAssembly trimmed builds, unreferenced property metadata and `MethodInfo` objects are silently removed, causing the property grid to produce empty rows or throw at runtime.
+
+### Two-Tier Provider Model
+
+The clean solution is to let the caller choose between two property provider strategies, without the grid itself needing to know which one is in use:
+
+**Tier 1 — Reflection provider (default, not AOT-safe)**
+
+`TypeDescriptorPropertyProvider` continues to exist. It is the zero-configuration path suitable for desktop WinUI 3, non-trimmed WebAssembly, and development-time tooling where reflection is available. AOT-trimmed targets should not use this provider.
+
+**Tier 2 — Source-generated provider (AOT-safe)**
+
+A Roslyn source generator (`UnoPropertyGrid.Generator`) walks the compile-time type graph and emits a concrete `IPropertyGridMemberDescriptor` per property, using typed lambda accessors instead of `MethodInfo.Invoke`. Because the lambdas reference the properties directly, the trimmer can see and preserve them.
+
+```csharp
+// Generated output — illustrative, not literal
+
+internal sealed class MyControlDescriptors : IPropertyGridMemberProvider
+{
+    public IReadOnlyList<IPropertyGridMemberDescriptor> GetDescriptors(object component)
+    {
+        if (component is not MyControl c) return [];
+        return _descriptors;
+    }
+
+    private static readonly IPropertyGridMemberDescriptor[] _descriptors =
+    [
+        new LambdaDescriptor<MyControl, double>(
+            name: "Width",
+            category: "Layout",
+            description: "Gets or sets the width of the element.",
+            getter: static c => c.Width,
+            setter: static (c, v) => c.Width = v),
+
+        new LambdaDescriptor<MyControl, bool>(
+            name: "IsEnabled",
+            category: "Common",
+            description: "",
+            getter: static c => c.IsEnabled,
+            setter: static (c, v) => c.IsEnabled = v),
+    ];
+}
+```
+
+The generator reads `[Browsable]`, `[Category]`, `[Description]`, `[DisplayName]`, `[ReadOnly]`, and `[DefaultValue]` attributes at compile time and folds them into the generated descriptor fields, so no runtime attribute scanning is needed.
+
+### Opt-In API
+
+Callers opt in by registering a generated provider instead of (or before) the reflection provider:
+
+```csharp
+// Fully AOT-safe: only generated descriptors
+propertyGrid.MemberProviders.Clear();
+propertyGrid.MemberProviders.Add(new MyControlDescriptors());
+
+// Hybrid: generated descriptors first, reflection fallback for unknown types
+propertyGrid.MemberProviders.Insert(0, new MyControlDescriptors());
+```
+
+The grid resolves descriptors by iterating `MemberProviders` in order and using the first provider that returns a non-empty list for a given component type. This means a project can migrate incrementally: generate descriptors for the types it controls and retain the reflection fallback for third-party types.
+
+### Triggering Code Generation
+
+Generation is opt-in at the type level via an attribute:
+
+```csharp
+[assembly: GeneratePropertyGridDescriptors(typeof(MyControl))]
+[assembly: GeneratePropertyGridDescriptors(typeof(MyOtherControl))]
+```
+
+Alternatively, a single marker on the assembly can request generation for all public types in a namespace:
+
+```csharp
+[assembly: GeneratePropertyGridDescriptors("MyControls")]
+```
+
+The source generator emits one provider class per annotated type (or one combined provider per namespace marker) in a `<ProjectName>.PropertyGrid` sub-namespace. The generated file is never checked in; it lives in `obj/` and is rebuilt on each compilation.
+
+### Attribute Table Integration
+
+Design-time metadata registered through `AttributeTableBuilder` is already compile-time, so it is AOT-safe as long as it does not call `Type.GetProperties` internally. The generator should also emit `AttributeTable` entries alongside descriptor lambdas so that metadata and accessor code are generated together and neither requires late binding.
+
+### LambdaDescriptor Helper
+
+A small non-generated helper bridges the generic lambda accessor to the non-generic `IPropertyGridMemberDescriptor` interface:
+
+```csharp
+internal sealed class LambdaDescriptor<TComponent, TValue> : IPropertyGridMemberDescriptor
+{
+    private readonly Func<TComponent, TValue> _getter;
+    private readonly Action<TComponent, TValue>? _setter;
+
+    public LambdaDescriptor(
+        string name, string category, string description,
+        Func<TComponent, TValue> getter,
+        Action<TComponent, TValue>? setter = null)
+    { ... }
+
+    public Type ValueType => typeof(TValue);
+    public bool IsReadOnly => _setter is null;
+    public object? GetValue(object component) => _getter((TComponent)component);
+    public void SetValue(object component, object? value) =>
+        _setter?.Invoke((TComponent)component, (TValue)value!);
+}
+```
+
+This type is part of the core library, not generated, so consumers do not need to reference generator internals directly.
+
+### Enum and Nullable Handling
+
+For enum properties the generator emits a `LambdaDescriptor<TComponent, TEnum>` with `TEnum` as the concrete enum type. The built-in enum editor uses `Enum.GetValues(typeof(TEnum))`, which is AOT-safe when `TEnum` is statically known. The generator should emit the `[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicFields)]` annotation on the descriptor's `ValueType` property to satisfy the trimmer.
+
+Nullable value types (`int?`, `bool?`) should be generated as `LambdaDescriptor<TComponent, TNullable>` where `TNullable` is the nullable type directly, letting the built-in editors handle null checks at runtime without reflection.
+
+### Non-Goals for This Feature
+
+- The generator does not need to cover every edge case the reflection provider handles. Complex nested types, indexers, and dynamic properties remain reflection-only initially.
+- The generator does not replace the custom editor pipeline. Editor resolution stays runtime-based because `FrameworkElement` creation cannot be reduced to static code without a full XAML compiler.
+- Source generation is not required for hosts that are not trimmed/AOT-compiled. The reflection provider remains the zero-friction default for development tools.
+
 ## Open Questions
 
 - Which Uno targets must support the full editor set: Windows only, WebAssembly, Skia, mobile, or all?

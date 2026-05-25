@@ -2,7 +2,8 @@ Param(
     [string]$OutDir = ".\dist",
     [string]$Configuration = "Release",
     [string[]]$Projects = @(
-        "src\UnoPropertyGrid\UnoPropertyGrid.csproj"
+        "src\UnoPropertyGrid\UnoPropertyGrid.csproj",
+        "src\UnoPropertyGrid.Generator\UnoPropertyGrid.Generator.csproj"
     )
 )
 
@@ -146,14 +147,24 @@ function Get-TypeDefinitionNames([string]$AssemblyPath) {
 function Test-Package([string]$PackagePath) {
     Add-Type -AssemblyName System.IO.Compression.FileSystem -ErrorAction Stop
 
+    $packageBaseName = [IO.Path]::GetFileNameWithoutExtension($PackagePath) -replace '\.\d+.*$', ''
     $extractRoot = Join-Path ([IO.Path]::GetTempPath()) "pkg_verify_$([Guid]::NewGuid())"
     Reset-Directory $extractRoot
     try {
         [IO.Compression.ZipFile]::ExtractToDirectory($PackagePath, $extractRoot)
 
-        $dlls = Get-ChildItem -Path (Join-Path $extractRoot "lib") -Recurse -Filter "UnoPropertyGrid.dll" -ErrorAction SilentlyContinue
-        if (-not $dlls -or $dlls.Count -eq 0) {
-            throw "Package '$PackagePath' does not contain UnoPropertyGrid.dll asset."
+        if ($packageBaseName -like "*Generator*") {
+            # Source generator packages ship the DLL under analyzers/dotnet/cs/ rather than lib/.
+            $analyzerDir = Join-Path $extractRoot "analyzers"
+            $dlls = Get-ChildItem -Path $analyzerDir -Recurse -Filter "UnoPropertyGrid.Generator.dll" -ErrorAction SilentlyContinue
+            if (-not $dlls -or $dlls.Count -eq 0) {
+                throw "Package '$PackagePath' does not contain UnoPropertyGrid.Generator.dll under analyzers/."
+            }
+        } else {
+            $dlls = Get-ChildItem -Path (Join-Path $extractRoot "lib") -Recurse -Filter "UnoPropertyGrid.dll" -ErrorAction SilentlyContinue
+            if (-not $dlls -or $dlls.Count -eq 0) {
+                throw "Package '$PackagePath' does not contain UnoPropertyGrid.dll under lib/."
+            }
         }
 
         foreach ($assembly in $dlls) {
