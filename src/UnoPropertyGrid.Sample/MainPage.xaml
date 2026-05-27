@@ -45,6 +45,7 @@
             x:Name="PropertyGrid"
             Grid.Row="1"
             NameColumnWidth="150"
-            PropertyGridTheme="Dark" />
+            PropertyGridTheme="Dark"
+            ShowDescriptionPane="True" />
     </Grid>
 </Page>

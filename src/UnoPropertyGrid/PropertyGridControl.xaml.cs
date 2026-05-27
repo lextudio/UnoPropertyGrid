@@ -96,6 +96,12 @@ public sealed partial class PropertyGridControl : UserControl, INotifyPropertyCh
     SolidColorBrush _overrideIndicatorBrush = new(Colors.Black);
     string _searchText = string.Empty;
     readonly List<Action<ElementTheme>> _editorThemeCallbacks = [];
+    // VS-style row selection. The blue/white selection brushes are theme-independent.
+    readonly SolidColorBrush _selectionBrush = new(Color.FromArgb(255, 0x00, 0x78, 0xD4));
+    readonly SolidColorBrush _selectionForegroundBrush = new(Colors.White);
+    Grid? _selectedRowGrid;
+    TextBlock? _selectedNameText;
+    TextBlock? _selectedValueText;
 
     public PropertyGridControl()
     {
@@ -412,6 +418,7 @@ public sealed partial class PropertyGridControl : UserControl, INotifyPropertyCh
     void BuildCategorizedRows()
     {
         _editorThemeCallbacks.Clear();
+        ClearRowSelection();
         CategorizedRowsPanel.Children.Clear();
         for (var i = 0; i < _categories.Count; i++)
             CategorizedRowsPanel.Children.Add(CreateCategoryHeader(_categories[i], i == 0));
@@ -421,6 +428,7 @@ public sealed partial class PropertyGridControl : UserControl, INotifyPropertyCh
     void BuildFlatRows()
     {
         _editorThemeCallbacks.Clear();
+        ClearRowSelection();
         FlatRowsPanel.Children.Clear();
         foreach (var property in _flatProperties)
             FlatRowsPanel.Children.Add(CreatePropertyRow(property));
@@ -429,6 +437,7 @@ public sealed partial class PropertyGridControl : UserControl, INotifyPropertyCh
 
     void BuildEventRows()
     {
+        ClearRowSelection();
         EventRowsPanel.Children.Clear();
         foreach (var @event in _visibleEvents)
             EventRowsPanel.Children.Add(CreateEventRow(@event));
@@ -534,11 +543,13 @@ public sealed partial class PropertyGridControl : UserControl, INotifyPropertyCh
     FrameworkElement CreatePropertyRow(PropertyGridPropertyViewModel property, bool drawSeparator = true)
     {
         var row = CreateRowGrid();
-        row.Children.Add(CreateNameCell(property.DisplayName));
+        var nameCell = CreateNameCell(property.DisplayName);
+        row.Children.Add(nameCell);
 
         var editorBorder = CreateCellBorder(1);
         editorBorder.Padding = new Thickness(4, 0, 4, 0);
-        editorBorder.Child = CreateEditor(property);
+        var editor = CreateEditor(property);
+        editorBorder.Child = editor;
         row.Children.Add(editorBorder);
 
         row.Children.Add(CreateIndicatorCell(2, property));
@@ -553,7 +564,54 @@ public sealed partial class PropertyGridControl : UserControl, INotifyPropertyCh
             Margin = drawSeparator ? new Thickness(0) : new Thickness(0, 0, 0, RowGap),
             Child = row
         };
+        // VS-style selection: clicking anywhere on the row highlights it and shows the
+        // property description. A plain-text value editor is recolored so it stays legible
+        // on the blue fill; editors with their own background are left as-is.
+        var nameText = nameCell.Child as TextBlock;
+        var valueText = editor as TextBlock;
+        outer.Tapped += (_, _) => SelectRow(property.DisplayName, property.Description, row, nameText, valueText);
         return outer;
+    }
+
+    void SelectRow(string title, string description, Grid row, TextBlock? nameText, TextBlock? valueText)
+    {
+        // Restore the previously selected row to its normal palette.
+        if (_selectedRowGrid is not null)
+            _selectedRowGrid.Background = _backgroundBrush;
+        if (_selectedNameText is not null)
+            _selectedNameText.Foreground = _foregroundBrush;
+        if (_selectedValueText is not null)
+            _selectedValueText.Foreground = _foregroundBrush;
+
+        // Apply the VS blue fill + white text to the newly selected row.
+        row.Background = _selectionBrush;
+        if (nameText is not null)
+            nameText.Foreground = _selectionForegroundBrush;
+        if (valueText is not null)
+            valueText.Foreground = _selectionForegroundBrush;
+
+        _selectedRowGrid = row;
+        _selectedNameText = nameText;
+        _selectedValueText = valueText;
+
+        UpdateDescription(title, description);
+    }
+
+    void ClearRowSelection()
+    {
+        // Rows are about to be rebuilt; drop references so we never touch detached elements.
+        _selectedRowGrid = null;
+        _selectedNameText = null;
+        _selectedValueText = null;
+        UpdateDescription(string.Empty, string.Empty);
+    }
+
+    void UpdateDescription(string title, string description)
+    {
+        if (DescriptionTitle is null || DescriptionText is null)
+            return;
+        DescriptionTitle.Text = title;
+        DescriptionText.Text = description;
     }
 
     FrameworkElement CreateEditor(PropertyGridPropertyViewModel property)
@@ -605,7 +663,8 @@ public sealed partial class PropertyGridControl : UserControl, INotifyPropertyCh
         // the handler box right edge aligns with property editors. The trailing column stays
         // empty (events have no override indicator).
         var row = CreateRowGrid();
-        row.Children.Add(CreateNameCell(@event.DisplayName));
+        var nameCell = CreateNameCell(@event.DisplayName);
+        row.Children.Add(nameCell);
 
         var textBox = new TextBox
         {
@@ -640,6 +699,8 @@ public sealed partial class PropertyGridControl : UserControl, INotifyPropertyCh
             Margin = new Thickness(0, 0, 0, RowGap),
             Child = row
         };
+        var nameText = nameCell.Child as TextBlock;
+        outer.Tapped += (_, _) => SelectRow(@event.DisplayName, @event.Description, row, nameText, null);
         return outer;
     }
 
