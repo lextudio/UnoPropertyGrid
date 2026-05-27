@@ -63,7 +63,9 @@ sealed class DateEditorProvider : IPropertyGridEditorProvider
         {
             Text = initial.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
             PlaceholderText = "yyyy-MM-dd",
-            MinHeight = 30
+            MinHeight = 30,
+            CornerRadius = new CornerRadius(0),
+            BorderThickness = new Thickness(1)
         };
         Grid.SetColumn(textBox, 1);
         panel.Children.Add(textBox);

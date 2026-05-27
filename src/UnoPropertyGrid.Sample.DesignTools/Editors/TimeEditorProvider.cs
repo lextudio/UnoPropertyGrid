@@ -33,7 +33,9 @@ sealed class TimeEditorProvider : IPropertyGridEditorProvider
         {
             Text = initial.ToString(@"hh\:mm", CultureInfo.InvariantCulture),
             PlaceholderText = "HH:mm",
-            MinHeight = 30
+            MinHeight = 30,
+            CornerRadius = new CornerRadius(0),
+            BorderThickness = new Thickness(1)
         };
         Grid.SetColumn(textBox, 1);
         panel.Children.Add(textBox);

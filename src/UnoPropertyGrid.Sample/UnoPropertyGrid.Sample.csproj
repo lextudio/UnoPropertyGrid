@@ -41,7 +41,7 @@
   </ItemGroup>
 
   <ItemGroup Condition="'$(Configuration)' == 'Debug'">
-    <PackageReference Include="LeXtudio.DevFlow.Agent.Uno" />
+    <ProjectReference Include="/Users/lextm/wpf-tools/wpf-labs/src/DevFlow/LeXtudio.DevFlow.Agent.Uno/LeXtudio.DevFlow.Agent.Uno.csproj" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'net10.0-windows10.0.19041.0'">
