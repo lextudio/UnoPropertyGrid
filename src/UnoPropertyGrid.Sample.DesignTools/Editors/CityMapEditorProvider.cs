@@ -18,15 +18,17 @@ sealed class CityMapEditorProvider : IPropertyGridEditorProvider
 {
     const double MapWidth = 520;
     const double MapHeight = 254;
-    const double EqualEarthLimit = 74d;
-    const double EqualEarthTop = 15.5d;
-    const double EqualEarthBottom = 238.5d;
+    const double FlyoutWidth = 420;
+    const double FlyoutHeight = 210;
+    const double MarkerXOffset = -15;
 
     static readonly CityOption[] Cities =
     [
         new("Vancouver", -123.1207, 49.2827),
+        new("Toronto", -79.3832, 43.6532),
         new("New York", -74.0060, 40.7128),
         new("London", -0.1276, 51.5072),
+        new("Paris", 2.3522, 48.8566),
         new("Tokyo", 139.6503, 35.6762)
     ];
 
@@ -58,11 +60,17 @@ sealed class CityMapEditorProvider : IPropertyGridEditorProvider
         comboBox.DropDownOpened += (_, _) => ApplyComboBoxBackground(comboBox);
         comboBox.DropDownClosed += (_, _) => ApplyComboBoxBackground(comboBox);
 
-        var canvas = new Canvas
+        var mapCanvas = new Canvas
         {
             Width = MapWidth,
             Height = MapHeight,
             Background = new SolidColorBrush(Color.FromArgb(255, 225, 238, 247)),
+        };
+        var markerCanvas = new Canvas
+        {
+            Width = MapWidth,
+            Height = MapHeight,
+            Background = new SolidColorBrush(Colors.Transparent)
         };
 
         var map = new Image
@@ -72,18 +80,136 @@ sealed class CityMapEditorProvider : IPropertyGridEditorProvider
             Stretch = Stretch.Fill,
             Source = new SvgImageSource(new Uri("ms-appx:///Assets/Svg/world_map.svg"))
         };
-        canvas.Children.Add(map);
+        mapCanvas.Children.Add(map);
         void ApplyTheme(ElementTheme? t = null)
         {
             var theme = t ?? EditorChrome.GetEffectiveTheme(comboBox);
             ApplyComboBoxTheme(comboBox, theme);
-            ApplyMapTheme(canvas, map, theme);
+            ApplyMapTheme(mapCanvas, map, theme);
         }
         comboBox.Loaded += (_, _) => ApplyTheme();
         comboBox.ActualThemeChanged += (_, _) => ApplyTheme();
         context.ThemeChanged += t => ApplyTheme(t);
 
-        var flyout = new Flyout { Content = canvas };
+        var zoomHost = new Viewbox
+        {
+            Stretch = Stretch.Fill,
+            Width = MapWidth,
+            Height = MapHeight,
+            Child = mapCanvas
+        };
+        var contentGrid = new Grid
+        {
+            Width = MapWidth,
+            Height = MapHeight
+        };
+        contentGrid.Children.Add(zoomHost);
+        contentGrid.Children.Add(markerCanvas);
+
+        var viewport = new ScrollViewer
+        {
+            Width = FlyoutWidth,
+            Height = FlyoutHeight,
+            HorizontalScrollBarVisibility = ScrollBarVisibility.Auto,
+            VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+            HorizontalScrollMode = ScrollMode.Enabled,
+            VerticalScrollMode = ScrollMode.Enabled,
+            ZoomMode = ZoomMode.Disabled,
+            Content = contentGrid
+        };
+        markerCanvas.ManipulationMode = ManipulationModes.TranslateX | ManipulationModes.TranslateY;
+        var isPanning = false;
+        Windows.Foundation.Point panStart = default;
+        double startH = 0;
+        double startV = 0;
+        markerCanvas.PointerPressed += (_, args) =>
+        {
+            isPanning = true;
+            panStart = args.GetCurrentPoint(viewport).Position;
+            startH = viewport.HorizontalOffset;
+            startV = viewport.VerticalOffset;
+            markerCanvas.CapturePointer(args.Pointer);
+        };
+        markerCanvas.PointerMoved += (_, args) =>
+        {
+            if (!isPanning)
+                return;
+
+            var pos = args.GetCurrentPoint(viewport).Position;
+            var dx = pos.X - panStart.X;
+            var dy = pos.Y - panStart.Y;
+            viewport.ChangeView(startH - dx, startV - dy, null, disableAnimation: true);
+        };
+        void EndPan(PointerRoutedEventArgs args)
+        {
+            if (!isPanning)
+                return;
+            isPanning = false;
+            markerCanvas.ReleasePointerCapture(args.Pointer);
+        }
+        markerCanvas.PointerReleased += (_, args) => EndPan(args);
+        markerCanvas.PointerCanceled += (_, args) => EndPan(args);
+        markerCanvas.PointerCaptureLost += (_, args) => EndPan(args);
+        var zoomFactor = 1d;
+        var markerButtons = new List<(Button Button, Windows.Foundation.Point BasePoint)>();
+        void ApplyZoom()
+        {
+            var scaledWidth = MapWidth * zoomFactor;
+            var scaledHeight = MapHeight * zoomFactor;
+            contentGrid.Width = scaledWidth;
+            contentGrid.Height = scaledHeight;
+            markerCanvas.Width = scaledWidth;
+            markerCanvas.Height = scaledHeight;
+            zoomHost.Width = MapWidth * zoomFactor;
+            zoomHost.Height = MapHeight * zoomFactor;
+            foreach (var marker in markerButtons)
+            {
+                Canvas.SetLeft(marker.Button, marker.BasePoint.X * zoomFactor - 11);
+                Canvas.SetTop(marker.Button, marker.BasePoint.Y * zoomFactor - 11);
+            }
+        }
+
+        var zoomOutButton = new Button
+        {
+            Content = "−",
+            Width = 24,
+            Height = 24,
+            Padding = new Thickness(0),
+            CornerRadius = new CornerRadius(0)
+        };
+        var zoomInButton = new Button
+        {
+            Content = "+",
+            Width = 24,
+            Height = 24,
+            Padding = new Thickness(0),
+            CornerRadius = new CornerRadius(0)
+        };
+        zoomOutButton.Click += (_, _) =>
+        {
+            zoomFactor = Math.Max(1d, zoomFactor - 0.25d);
+            ApplyZoom();
+        };
+        zoomInButton.Click += (_, _) =>
+        {
+            zoomFactor = Math.Min(3.5d, zoomFactor + 0.25d);
+            ApplyZoom();
+        };
+
+        var controls = new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            HorizontalAlignment = HorizontalAlignment.Right,
+            Spacing = 4
+        };
+        controls.Children.Add(zoomOutButton);
+        controls.Children.Add(zoomInButton);
+
+        var flyoutLayout = new StackPanel { Spacing = 6 };
+        flyoutLayout.Children.Add(controls);
+        flyoutLayout.Children.Add(viewport);
+
+        var flyout = new Flyout { Content = flyoutLayout };
         var chooseButton = EditorChrome.CreatePickerButton("\uE707", "Choose city", context);
         chooseButton.Flyout = flyout;
         panel.Children.Add(chooseButton);
@@ -114,8 +240,10 @@ sealed class CityMapEditorProvider : IPropertyGridEditorProvider
                 context.SetValue?.Invoke(city.Name);
                 flyout.Hide();
             };
-            canvas.Children.Add(button);
+            markerButtons.Add((button, point));
+            markerCanvas.Children.Add(button);
         }
+        ApplyZoom();
 
         comboBox.SelectionChanged += (_, _) =>
         {
@@ -242,15 +370,15 @@ sealed class CityMapEditorProvider : IPropertyGridEditorProvider
 
     static Windows.Foundation.Point Project(double longitude, double latitude)
     {
-        var projected = EqualEarthProject(longitude, Math.Max(-EqualEarthLimit, Math.Min(EqualEarthLimit, latitude)));
+        var projected = EqualEarthProject(longitude, Math.Clamp(latitude, -90d, 90d));
         var left = EqualEarthProject(-180, 0).X;
         var right = EqualEarthProject(180, 0).X;
-        var top = EqualEarthProject(0, EqualEarthLimit).Y;
-        var bottom = EqualEarthProject(0, -EqualEarthLimit).Y;
+        var top = EqualEarthProject(0, 90).Y;
+        var bottom = EqualEarthProject(0, -90).Y;
 
         var x = (projected.X - left) / (right - left) * MapWidth;
-        var y = EqualEarthTop + (projected.Y - top) / (bottom - top) * (EqualEarthBottom - EqualEarthTop);
-        return new Windows.Foundation.Point(x, y);
+        var y = (projected.Y - top) / (bottom - top) * MapHeight;
+        return new Windows.Foundation.Point(x + MarkerXOffset, y);
     }
 
     static Windows.Foundation.Point EqualEarthProject(double longitude, double latitude)
@@ -270,13 +398,6 @@ sealed class CityMapEditorProvider : IPropertyGridEditorProvider
             / (3 * (9 * a4 * theta6 + 7 * a3 * theta2 * theta2 + 3 * a2 * theta2 + a1));
         var y = a4 * theta * theta6 + a3 * theta * theta2 * theta2 + a2 * theta * theta2 + a1 * theta;
         return new Windows.Foundation.Point(x, -y);
-    }
-
-    static Windows.Foundation.Point EquirectangularProject(double longitude, double latitude)
-    {
-        var x = (longitude + 180d) / 360d * MapWidth;
-        var y = (90d - latitude) / 180d * MapHeight;
-        return new Windows.Foundation.Point(x, y);
     }
 
     sealed record CityOption(string Name, double Longitude, double Latitude);

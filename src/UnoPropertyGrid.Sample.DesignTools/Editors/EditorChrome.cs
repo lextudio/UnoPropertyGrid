@@ -25,13 +25,34 @@ static class EditorChrome
     static void ApplyButtonTheme(Button button, ElementTheme? theme = null)
     {
         var isDark = (theme ?? GetEffectiveTheme(button)) == ElementTheme.Dark;
-        button.Resources["ButtonBackgroundPointerOver"] = new SolidColorBrush(isDark
+        var fg = new SolidColorBrush(isDark
+            ? Color.FromArgb(255, 0xD4, 0xD4, 0xD4)
+            : Color.FromArgb(255, 0x1E, 0x1E, 0x1E));
+        var bg = new SolidColorBrush(Colors.Transparent);
+        var hover = new SolidColorBrush(isDark
             ? Color.FromArgb(255, 0x2D, 0x2D, 0x30)
             : Color.FromArgb(255, 0xE8, 0xE8, 0xE8));
-        button.Resources["ButtonBackgroundPressed"] = new SolidColorBrush(isDark
+        var pressed = new SolidColorBrush(isDark
             ? Color.FromArgb(255, 0x3F, 0x3F, 0x46)
             : Color.FromArgb(255, 0xD0, 0xD0, 0xD0));
-        button.Resources["ButtonBorderBrushPointerOver"] = new SolidColorBrush(Colors.Transparent);
+        var transparent = new SolidColorBrush(Colors.Transparent);
+        button.Foreground = fg;
+        button.Background = bg;
+        button.BorderBrush = transparent;
+        if (button.Content is FontIcon icon)
+            icon.Foreground = fg;
+        button.Resources["ButtonForeground"] = fg;
+        button.Resources["ButtonForegroundPointerOver"] = fg;
+        button.Resources["ButtonForegroundPressed"] = fg;
+        button.Resources["ButtonForegroundDisabled"] = fg;
+        button.Resources["ButtonBackground"] = bg;
+        button.Resources["ButtonBackgroundPointerOver"] = hover;
+        button.Resources["ButtonBackgroundPressed"] = pressed;
+        button.Resources["ButtonBackgroundDisabled"] = bg;
+        button.Resources["ButtonBorderBrush"] = transparent;
+        button.Resources["ButtonBorderBrushPointerOver"] = transparent;
+        button.Resources["ButtonBorderBrushPressed"] = transparent;
+        button.Resources["ButtonBorderBrushDisabled"] = transparent;
     }
 
     public static void ApplyTextBoxTheme(Control textBox, ElementTheme? theme = null)
