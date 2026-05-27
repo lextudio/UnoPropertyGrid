@@ -3,24 +3,24 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
     <SolidColorBrush x:Key="PropertyGridBackgroundBrush" Color="#1E1E1E" />
-    <SolidColorBrush x:Key="PropertyGridPanelBrush" Color="#252526" />
-    <SolidColorBrush x:Key="PropertyGridCellBrush" Color="#1E1E1E" />
-    <SolidColorBrush x:Key="PropertyGridCategoryBrush" Color="#252526" />
+    <SolidColorBrush x:Key="PropertyGridPanelBrush" Color="#1E1E1E" />
+    <SolidColorBrush x:Key="PropertyGridCellBrush" Color="#252526" />
+    <SolidColorBrush x:Key="PropertyGridCategoryBrush" Color="#2D2D30" />
     <SolidColorBrush x:Key="PropertyGridBorderBrush" Color="#3F3F46" />
     <SolidColorBrush x:Key="PropertyGridForegroundBrush" Color="#E5E5E5" />
     <SolidColorBrush x:Key="PropertyGridMutedForegroundBrush" Color="#8C8C8C" />
     <SolidColorBrush x:Key="PropertyGridAccentBrush" Color="#007ACC" />
     <FontFamily x:Key="PropertyGridFontFamily">Open Sans</FontFamily>
-    <SolidColorBrush x:Key="TextControlBackground" Color="#1E1E1E" />
-    <SolidColorBrush x:Key="TextControlBackgroundPointerOver" Color="#252526" />
-    <SolidColorBrush x:Key="TextControlBackgroundFocused" Color="#1E1E1E" />
+    <SolidColorBrush x:Key="TextControlBackground" Color="#252526" />
+    <SolidColorBrush x:Key="TextControlBackgroundPointerOver" Color="#2F2F32" />
+    <SolidColorBrush x:Key="TextControlBackgroundFocused" Color="#252526" />
     <SolidColorBrush x:Key="TextControlForeground" Color="#E5E5E5" />
     <SolidColorBrush x:Key="TextControlForegroundFocused" Color="#E5E5E5" />
     <SolidColorBrush x:Key="TextControlPlaceholderForeground" Color="#6D6D6D" />
     <SolidColorBrush x:Key="TextControlBorderBrush" Color="#3F3F46" />
     <SolidColorBrush x:Key="TextControlBorderBrushPointerOver" Color="#6E6E78" />
     <SolidColorBrush x:Key="TextControlBorderBrushFocused" Color="#007ACC" />
-    <SolidColorBrush x:Key="ComboBoxBackground" Color="#1E1E1E" />
+    <SolidColorBrush x:Key="ComboBoxBackground" Color="#252526" />
     <SolidColorBrush x:Key="ComboBoxBackgroundPointerOver" Color="#252526" />
     <SolidColorBrush x:Key="ComboBoxBackgroundPressed" Color="#252526" />
     <SolidColorBrush x:Key="ComboBoxForeground" Color="#E5E5E5" />
@@ -96,25 +96,25 @@
         </ResourceDictionary>
         <ResourceDictionary x:Key="Dark">
             <SolidColorBrush x:Key="PropertyGridBackgroundBrush" Color="#1E1E1E" />
-            <SolidColorBrush x:Key="PropertyGridPanelBrush" Color="#252526" />
-            <SolidColorBrush x:Key="PropertyGridCellBrush" Color="#1E1E1E" />
-            <SolidColorBrush x:Key="PropertyGridCategoryBrush" Color="#252526" />
+            <SolidColorBrush x:Key="PropertyGridPanelBrush" Color="#1E1E1E" />
+            <SolidColorBrush x:Key="PropertyGridCellBrush" Color="#252526" />
+            <SolidColorBrush x:Key="PropertyGridCategoryBrush" Color="#2D2D30" />
             <SolidColorBrush x:Key="PropertyGridBorderBrush" Color="#3F3F46" />
             <SolidColorBrush x:Key="PropertyGridForegroundBrush" Color="#E5E5E5" />
             <SolidColorBrush x:Key="PropertyGridMutedForegroundBrush" Color="#8C8C8C" />
             <SolidColorBrush x:Key="PropertyGridAccentBrush" Color="#007ACC" />
             <FontFamily x:Key="PropertyGridFontFamily">Open Sans</FontFamily>
-            <SolidColorBrush x:Key="TextControlBackground" Color="#1E1E1E" />
-            <SolidColorBrush x:Key="TextControlBackgroundPointerOver" Color="#252526" />
-            <SolidColorBrush x:Key="TextControlBackgroundFocused" Color="#1E1E1E" />
+            <SolidColorBrush x:Key="TextControlBackground" Color="#252526" />
+            <SolidColorBrush x:Key="TextControlBackgroundPointerOver" Color="#2F2F32" />
+            <SolidColorBrush x:Key="TextControlBackgroundFocused" Color="#252526" />
             <SolidColorBrush x:Key="TextControlForeground" Color="#E5E5E5" />
             <SolidColorBrush x:Key="TextControlForegroundFocused" Color="#E5E5E5" />
             <SolidColorBrush x:Key="TextControlPlaceholderForeground" Color="#6D6D6D" />
             <SolidColorBrush x:Key="TextControlBorderBrush" Color="#3F3F46" />
             <SolidColorBrush x:Key="TextControlBorderBrushPointerOver" Color="#6E6E78" />
             <SolidColorBrush x:Key="TextControlBorderBrushFocused" Color="#007ACC" />
-            <SolidColorBrush x:Key="ComboBoxBackground" Color="#1E1E1E" />
-            <SolidColorBrush x:Key="ComboBoxBackgroundPointerOver" Color="#252526" />
+            <SolidColorBrush x:Key="ComboBoxBackground" Color="#252526" />
+            <SolidColorBrush x:Key="ComboBoxBackgroundPointerOver" Color="#2F2F32" />
             <SolidColorBrush x:Key="ComboBoxBackgroundPressed" Color="#252526" />
             <SolidColorBrush x:Key="ComboBoxForeground" Color="#E5E5E5" />
             <SolidColorBrush x:Key="ComboBoxForegroundPointerOver" Color="#E5E5E5" />
@@ -142,25 +142,25 @@
         </ResourceDictionary>
         <ResourceDictionary x:Key="Default">
             <SolidColorBrush x:Key="PropertyGridBackgroundBrush" Color="#1E1E1E" />
-            <SolidColorBrush x:Key="PropertyGridPanelBrush" Color="#252526" />
-            <SolidColorBrush x:Key="PropertyGridCellBrush" Color="#1E1E1E" />
-            <SolidColorBrush x:Key="PropertyGridCategoryBrush" Color="#252526" />
+            <SolidColorBrush x:Key="PropertyGridPanelBrush" Color="#1E1E1E" />
+            <SolidColorBrush x:Key="PropertyGridCellBrush" Color="#252526" />
+            <SolidColorBrush x:Key="PropertyGridCategoryBrush" Color="#2D2D30" />
             <SolidColorBrush x:Key="PropertyGridBorderBrush" Color="#3F3F46" />
             <SolidColorBrush x:Key="PropertyGridForegroundBrush" Color="#E5E5E5" />
             <SolidColorBrush x:Key="PropertyGridMutedForegroundBrush" Color="#8C8C8C" />
             <SolidColorBrush x:Key="PropertyGridAccentBrush" Color="#007ACC" />
             <FontFamily x:Key="PropertyGridFontFamily">Open Sans</FontFamily>
-            <SolidColorBrush x:Key="TextControlBackground" Color="#1E1E1E" />
-            <SolidColorBrush x:Key="TextControlBackgroundPointerOver" Color="#252526" />
-            <SolidColorBrush x:Key="TextControlBackgroundFocused" Color="#1E1E1E" />
+            <SolidColorBrush x:Key="TextControlBackground" Color="#252526" />
+            <SolidColorBrush x:Key="TextControlBackgroundPointerOver" Color="#2F2F32" />
+            <SolidColorBrush x:Key="TextControlBackgroundFocused" Color="#252526" />
             <SolidColorBrush x:Key="TextControlForeground" Color="#E5E5E5" />
             <SolidColorBrush x:Key="TextControlForegroundFocused" Color="#E5E5E5" />
             <SolidColorBrush x:Key="TextControlPlaceholderForeground" Color="#6D6D6D" />
             <SolidColorBrush x:Key="TextControlBorderBrush" Color="#3F3F46" />
             <SolidColorBrush x:Key="TextControlBorderBrushPointerOver" Color="#6E6E78" />
             <SolidColorBrush x:Key="TextControlBorderBrushFocused" Color="#007ACC" />
-            <SolidColorBrush x:Key="ComboBoxBackground" Color="#1E1E1E" />
-            <SolidColorBrush x:Key="ComboBoxBackgroundPointerOver" Color="#252526" />
+            <SolidColorBrush x:Key="ComboBoxBackground" Color="#252526" />
+            <SolidColorBrush x:Key="ComboBoxBackgroundPointerOver" Color="#2F2F32" />
             <SolidColorBrush x:Key="ComboBoxBackgroundPressed" Color="#252526" />
             <SolidColorBrush x:Key="ComboBoxForeground" Color="#E5E5E5" />
             <SolidColorBrush x:Key="ComboBoxForegroundPointerOver" Color="#E5E5E5" />
