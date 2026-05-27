@@ -50,10 +50,13 @@ sealed class CityMapEditorProvider : IPropertyGridEditorProvider
             ItemsSource = Cities.Select(city => city.Name).ToArray(),
             Text = initial,
             PlaceholderText = "City",
-            MinHeight = 30
+            MinHeight = 30,
+            BorderThickness = new Thickness(0)
         };
         Grid.SetColumn(comboBox, 1);
         panel.Children.Add(comboBox);
+        comboBox.DropDownOpened += (_, _) => ApplyComboBoxBackground(comboBox);
+        comboBox.DropDownClosed += (_, _) => ApplyComboBoxBackground(comboBox);
 
         var canvas = new Canvas
         {
@@ -70,9 +73,18 @@ sealed class CityMapEditorProvider : IPropertyGridEditorProvider
             Source = new SvgImageSource(new Uri("ms-appx:///Assets/Svg/world_map.svg"))
         };
         canvas.Children.Add(map);
+        void ApplyTheme(ElementTheme? t = null)
+        {
+            var theme = t ?? EditorChrome.GetEffectiveTheme(comboBox);
+            ApplyComboBoxTheme(comboBox, theme);
+            ApplyMapTheme(canvas, map, theme);
+        }
+        comboBox.Loaded += (_, _) => ApplyTheme();
+        comboBox.ActualThemeChanged += (_, _) => ApplyTheme();
+        context.ThemeChanged += t => ApplyTheme(t);
 
         var flyout = new Flyout { Content = canvas };
-        var chooseButton = EditorChrome.CreatePickerButton("\uE707", "Choose city");
+        var chooseButton = EditorChrome.CreatePickerButton("\uE707", "Choose city", context);
         chooseButton.Flyout = flyout;
         panel.Children.Add(chooseButton);
 
@@ -88,6 +100,10 @@ sealed class CityMapEditorProvider : IPropertyGridEditorProvider
                 FontSize = 18,
                 Tag = city
             };
+            button.Resources["ButtonBackgroundPointerOver"] = new SolidColorBrush(Color.FromArgb(255, 0x00, 0x78, 0xD4));
+            button.Resources["ButtonBackgroundPressed"] = new SolidColorBrush(Color.FromArgb(255, 0x00, 0x66, 0xB4));
+            button.Resources["ButtonBorderBrushPointerOver"] = new SolidColorBrush(Colors.Transparent);
+            button.Resources["ButtonBorderBrushPressed"] = new SolidColorBrush(Colors.Transparent);
             ToolTipService.SetToolTip(button, city.Name);
             Canvas.SetLeft(button, point.X - 11);
             Canvas.SetTop(button, point.Y - 11);
@@ -105,6 +121,7 @@ sealed class CityMapEditorProvider : IPropertyGridEditorProvider
         {
             if (comboBox.SelectedItem is string city)
                 context.SetValue?.Invoke(city);
+            ApplyComboBoxBackground(comboBox);
         };
         comboBox.LostFocus += (_, _) => ApplyText();
         comboBox.KeyDown += (_, args) =>
@@ -118,6 +135,108 @@ sealed class CityMapEditorProvider : IPropertyGridEditorProvider
         void ApplyText()
         {
             context.SetValue?.Invoke(comboBox.Text.Trim());
+        }
+    }
+
+    static void ApplyMapTheme(Canvas canvas, Image map, ElementTheme theme)
+    {
+        var isDark = theme == ElementTheme.Dark;
+        canvas.Background = new SolidColorBrush(isDark
+            ? Color.FromArgb(255, 0x1A, 0x27, 0x44)
+            : Color.FromArgb(255, 225, 238, 247));
+        map.Source = new SvgImageSource(new Uri(isDark
+            ? "ms-appx:///Assets/Svg/world_map_dark.svg"
+            : "ms-appx:///Assets/Svg/world_map.svg"));
+    }
+
+    static void ApplyComboBoxTheme(ComboBox comboBox, ElementTheme? theme = null)
+    {
+        var isDark = (theme ?? EditorChrome.GetEffectiveTheme(comboBox)) == ElementTheme.Dark;
+        var fg = new SolidColorBrush(isDark ? Color.FromArgb(255, 0xD4, 0xD4, 0xD4) : Color.FromArgb(255, 0x1E, 0x1E, 0x1E));
+        var bg = new SolidColorBrush(isDark ? Color.FromArgb(255, 0x25, 0x25, 0x26) : Color.FromArgb(255, 0xF3, 0xF3, 0xF3));
+        var hover = new SolidColorBrush(isDark ? Color.FromArgb(255, 0x2D, 0x2D, 0x30) : Color.FromArgb(255, 0xE8, 0xE8, 0xE8));
+        var border = new SolidColorBrush(isDark ? Color.FromArgb(255, 0x3F, 0x3F, 0x46) : Color.FromArgb(255, 0xCC, 0xCC, 0xCC));
+        var muted = new SolidColorBrush(isDark ? Color.FromArgb(255, 0x6B, 0x6B, 0x6B) : Color.FromArgb(255, 0x5F, 0x5F, 0x5F));
+        comboBox.Background = bg;
+        comboBox.Foreground = fg;
+        comboBox.BorderBrush = border;
+        comboBox.Resources["ComboBoxBackground"] = bg;
+        comboBox.Resources["ComboBoxBackgroundPointerOver"] = hover;
+        comboBox.Resources["ComboBoxBackgroundPressed"] = hover;
+        comboBox.Resources["ComboBoxBackgroundFocused"] = bg;
+        comboBox.Resources["ComboBoxBackgroundFocusedPointerOver"] = hover;
+        comboBox.Resources["ComboBoxBackgroundFocusedPressed"] = hover;
+        comboBox.Resources["ComboBoxBackgroundOpen"] = bg;
+        comboBox.Resources["ComboBoxBackgroundOpenPointerOver"] = hover;
+        comboBox.Resources["ComboBoxBackgroundOpenPressed"] = hover;
+        comboBox.Resources["ComboBoxForeground"] = fg;
+        comboBox.Resources["ComboBoxForegroundPointerOver"] = fg;
+        comboBox.Resources["ComboBoxForegroundPressed"] = fg;
+        comboBox.Resources["ComboBoxForegroundFocused"] = fg;
+        comboBox.Resources["ComboBoxForegroundFocusedPointerOver"] = fg;
+        comboBox.Resources["ComboBoxForegroundOpen"] = fg;
+        comboBox.Resources["ComboBoxBorderBrush"] = border;
+        comboBox.Resources["ComboBoxBorderBrushPointerOver"] = border;
+        comboBox.Resources["ComboBoxBorderBrushPressed"] = border;
+        comboBox.Resources["ComboBoxBorderBrushFocused"] = border;
+        comboBox.Resources["ComboBoxBorderBrushFocusedPointerOver"] = border;
+        comboBox.Resources["ComboBoxBorderBrushOpen"] = border;
+        comboBox.Resources["ComboBoxDropDownBackground"] = bg;
+        comboBox.Resources["ComboBoxDropDownBorderBrush"] = border;
+        comboBox.Resources["ComboBoxDropDownForeground"] = fg;
+        comboBox.Resources["ComboBoxItemBackground"] = bg;
+        comboBox.Resources["ComboBoxItemBackgroundPointerOver"] = hover;
+        comboBox.Resources["ComboBoxItemBackgroundPressed"] = hover;
+        comboBox.Resources["ComboBoxItemBackgroundSelected"] = hover;
+        comboBox.Resources["ComboBoxItemBackgroundSelectedPointerOver"] = hover;
+        comboBox.Resources["ComboBoxItemForeground"] = fg;
+        comboBox.Resources["ComboBoxItemForegroundPointerOver"] = fg;
+        comboBox.Resources["ComboBoxItemForegroundSelected"] = fg;
+        comboBox.Resources["ComboBoxDropDownGlyphForeground"] = fg;
+        comboBox.Resources["ComboBoxDropDownGlyphForegroundPointerOver"] = fg;
+        comboBox.Resources["ComboBoxDropDownGlyphForegroundPressed"] = fg;
+        comboBox.Resources["ComboBoxDropDownGlyphForegroundFocused"] = fg;
+        comboBox.Resources["ComboBoxDropDownGlyphForegroundFocusedPointerOver"] = fg;
+        comboBox.Resources["ComboBoxDropDownGlyphForegroundOpen"] = fg;
+        comboBox.Resources["TextControlBackground"] = bg;
+        comboBox.Resources["TextControlBackgroundPointerOver"] = bg;
+        comboBox.Resources["TextControlBackgroundFocused"] = bg;
+        comboBox.Resources["TextControlForeground"] = fg;
+        comboBox.Resources["TextControlForegroundFocused"] = fg;
+        comboBox.Resources["TextControlPlaceholderForeground"] = muted;
+        SetPlaceholderForeground(comboBox, muted);
+    }
+
+    static void ApplyComboBoxBackground(ComboBox comboBox)
+    {
+        var isDark = EditorChrome.GetEffectiveTheme(comboBox) == ElementTheme.Dark;
+        var bg = new SolidColorBrush(isDark ? Color.FromArgb(255, 0x25, 0x25, 0x26) : Color.FromArgb(255, 0xF3, 0xF3, 0xF3));
+        PatchBackground(comboBox, bg);
+    }
+
+    static void PatchBackground(DependencyObject root, Brush brush)
+    {
+        var count = VisualTreeHelper.GetChildrenCount(root);
+        for (var i = 0; i < count; i++)
+        {
+            var child = VisualTreeHelper.GetChild(root, i);
+            if (child is Border b && b.Name == "BackgroundElement")
+                b.Background = brush;
+            else
+                PatchBackground(child, brush);
+        }
+    }
+
+    static void SetPlaceholderForeground(DependencyObject root, Brush brush)
+    {
+        var count = VisualTreeHelper.GetChildrenCount(root);
+        for (var i = 0; i < count; i++)
+        {
+            var child = VisualTreeHelper.GetChild(root, i);
+            if (child is TextBlock tb && (tb.Name == "PlaceholderTextContentPresenter" || tb.Name == "PlaceholderTextBlock"))
+                tb.Foreground = brush;
+            else
+                SetPlaceholderForeground(child, brush);
         }
     }
 

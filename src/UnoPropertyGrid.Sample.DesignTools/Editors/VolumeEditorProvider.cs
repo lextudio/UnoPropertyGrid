@@ -79,6 +79,15 @@ sealed class VolumeEditorProvider : IPropertyGridEditorProvider
             TextAlignment = TextAlignment.Right
         };
         panel.Children.Add(label);
+        void ApplyLabelTheme(ElementTheme? t = null)
+        {
+            var isDark = (t ?? EditorChrome.GetEffectiveTheme(label)) == ElementTheme.Dark;
+            label.Foreground = new SolidColorBrush(isDark
+                ? Color.FromArgb(255, 0xD4, 0xD4, 0xD4)
+                : Color.FromArgb(255, 0x1E, 0x1E, 0x1E));
+        }
+        label.Loaded += (_, _) => ApplyLabelTheme();
+        context.ThemeChanged += t => ApplyLabelTheme(t);
 
         SetSegments(value);
 

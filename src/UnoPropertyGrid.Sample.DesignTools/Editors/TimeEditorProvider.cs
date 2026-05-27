@@ -37,6 +37,8 @@ sealed class TimeEditorProvider : IPropertyGridEditorProvider
         };
         Grid.SetColumn(textBox, 1);
         panel.Children.Add(textBox);
+        textBox.Loaded += (_, _) => EditorChrome.ApplyTextBoxTheme(textBox);
+        context.ThemeChanged += t => EditorChrome.ApplyTextBoxTheme(textBox, t);
 
         var selectedTime = initial;
         SpinPickerParts? hourPicker = null;
@@ -76,9 +78,12 @@ sealed class TimeEditorProvider : IPropertyGridEditorProvider
         timePickerPanel.Children.Add(minutePicker.Root);
 
         var flyout = new Flyout { Content = timePickerPanel };
-        var button = EditorChrome.CreatePickerButton("\uE823", "Choose time");
+        var button = EditorChrome.CreatePickerButton("\uE823", "Choose time", context);
         button.Flyout = flyout;
         panel.Children.Add(button);
+        button.Loaded += (_, _) => timePickerPanel.RequestedTheme = EditorChrome.GetEffectiveTheme(button);
+        button.ActualThemeChanged += (_, _) => timePickerPanel.RequestedTheme = EditorChrome.GetEffectiveTheme(button);
+        context.ThemeChanged += t => timePickerPanel.RequestedTheme = t;
 
         flyout.Opening += (_, _) =>
         {

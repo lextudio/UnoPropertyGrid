@@ -13,6 +13,17 @@
                 <ResourceDictionary Source="PropertyGridThemeResources.xaml" />
             </ResourceDictionary.MergedDictionaries>
 
+            <!-- Implicit styles: set Foreground on FontIcons and TextBlocks that have no
+                 explicit value so code-created elements (e.g. editor picker icons, volume
+                 percentage label) pick up the correct palette color instead of the platform
+                 default which resolves at app level rather than PropertyGrid scope. -->
+            <Style TargetType="FontIcon">
+                <Setter Property="Foreground" Value="{ThemeResource PropertyGridForegroundBrush}" />
+            </Style>
+            <Style TargetType="TextBlock">
+                <Setter Property="Foreground" Value="{ThemeResource PropertyGridForegroundBrush}" />
+            </Style>
+
             <DataTemplate x:Key="PropertyTemplate">
                 <Border
                     BorderBrush="{ThemeResource PropertyGridBorderBrush}"
@@ -74,10 +85,10 @@
             </DataTemplate>
 
             <DataTemplate x:Key="CategoryTemplate">
-                <StackPanel Background="{ThemeResource PropertyGridBackgroundBrush}">
+                <StackPanel Background="{ThemeResource PropertyGridBackgroundBrush}" Margin="0,0,0,10">
                     <ToggleButton
-                        MinHeight="24"
-                        Padding="0"
+                        MinHeight="28"
+                        Padding="8,6"
                         HorizontalAlignment="Stretch"
                         HorizontalContentAlignment="Stretch"
                         Background="{ThemeResource PropertyGridCategoryBrush}"
@@ -139,6 +150,7 @@
                         Padding="4,2"
                         Background="{ThemeResource PropertyGridCellBrush}"
                         BorderBrush="{ThemeResource PropertyGridBorderBrush}"
+                        BorderThickness="0"
                         Foreground="{ThemeResource PropertyGridForegroundBrush}"
                         FontSize="12"
                         Text="{Binding HandlerName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
@@ -276,6 +288,8 @@
                 Padding="4,2,28,2"
                 Background="{ThemeResource PropertyGridCellBrush}"
                 BorderBrush="{ThemeResource PropertyGridBorderBrush}"
+                BorderThickness="0"
+                CornerRadius="0"
                 FontSize="12"
                 Foreground="{ThemeResource PropertyGridForegroundBrush}"
                 PlaceholderText="Search"
@@ -309,18 +323,13 @@
                 Padding="2,0"
                 Background="{ThemeResource PropertyGridCellBrush}"
                 BorderBrush="{ThemeResource PropertyGridBorderBrush}"
+                BorderThickness="0"
                 FontSize="12"
                 Foreground="{ThemeResource PropertyGridForegroundBrush}"
                 SelectedIndex="0"
                 SelectionChanged="OnArrangeByChanged">
-                <ComboBoxItem
-                    Background="{ThemeResource PropertyGridCellBrush}"
-                    Content="Category"
-                    Foreground="{ThemeResource PropertyGridForegroundBrush}" />
-                <ComboBoxItem
-                    Background="{ThemeResource PropertyGridCellBrush}"
-                    Content="Name"
-                    Foreground="{ThemeResource PropertyGridForegroundBrush}" />
+                <ComboBoxItem Content="Category" />
+                <ComboBoxItem Content="Name" />
             </ComboBox>
         </StackPanel>
 

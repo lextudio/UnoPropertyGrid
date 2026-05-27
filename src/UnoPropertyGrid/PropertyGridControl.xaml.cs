@@ -92,6 +92,7 @@ public sealed partial class PropertyGridControl : UserControl, INotifyPropertyCh
     SolidColorBrush _mutedForegroundBrush = new(Colors.Gray);
     SolidColorBrush _overrideIndicatorBrush = new(Colors.Black);
     string _searchText = string.Empty;
+    readonly List<Action<ElementTheme>> _editorThemeCallbacks = [];
 
     public PropertyGridControl()
     {
@@ -99,6 +100,14 @@ public sealed partial class PropertyGridControl : UserControl, INotifyPropertyCh
         RowsHost.LayoutUpdated += OnRowsHostLayoutUpdated;
         ApplyThemeBrushes();
         ApplyNameColumnWidth(NameColumnWidth);
+        // Re-apply theme brushes when the app theme changes so platform controls
+        // like TextBox (placeholder color) and ComboBox pick up the correct palette.
+        RootControl.ActualThemeChanged += (_, _) => ApplyThemeBrushes();
+        // The TextBox ControlTemplate applies after the constructor returns (first layout pass),
+        // so SetPlaceholderForeground finds no elements when called from ApplyThemeBrushes().
+        // Subscribe to Loaded to fix the placeholder once the template is fully in the tree.
+        SearchBox.Loaded += (_, _) => SetPlaceholderForeground(SearchBox, _mutedForegroundBrush);
+        ObjectNameBox.Loaded += (_, _) => SetPlaceholderForeground(ObjectNameBox, _mutedForegroundBrush);
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
@@ -393,10 +402,13 @@ public sealed partial class PropertyGridControl : UserControl, INotifyPropertyCh
         CategorizedRowsPanel.Visibility = showCategorized ? Visibility.Visible : Visibility.Collapsed;
         FlatRowsPanel.Visibility = showFlat ? Visibility.Visible : Visibility.Collapsed;
         EventRowsPanel.Visibility = showEvents ? Visibility.Visible : Visibility.Collapsed;
+
+        NotifyEditorsThemeChanged();
     }
 
     void BuildCategorizedRows()
     {
+        _editorThemeCallbacks.Clear();
         CategorizedRowsPanel.Children.Clear();
         for (var i = 0; i < _categories.Count; i++)
             CategorizedRowsPanel.Children.Add(CreateCategoryHeader(_categories[i], i == 0));
@@ -405,6 +417,7 @@ public sealed partial class PropertyGridControl : UserControl, INotifyPropertyCh
 
     void BuildFlatRows()
     {
+        _editorThemeCallbacks.Clear();
         FlatRowsPanel.Children.Clear();
         foreach (var property in _flatProperties)
             FlatRowsPanel.Children.Add(CreatePropertyRow(property));
@@ -566,6 +579,7 @@ public sealed partial class PropertyGridControl : UserControl, INotifyPropertyCh
                 property.Value = value;
             }
         };
+        _editorThemeCallbacks.Add(t => context.RaiseThemeChanged(t));
 
         property.PropertyChanged += (_, e) =>
         {
@@ -722,6 +736,11 @@ public sealed partial class PropertyGridControl : UserControl, INotifyPropertyCh
 
     void ApplyThemeBrushes()
     {
+        // Do not use RootControl.ActualTheme here. On Uno Platform, ActualTheme on child
+        // elements reports the app/page-level theme rather than the nearest ancestor's
+        // explicit RequestedTheme, so it returns Light even when RootControl.RequestedTheme
+        // is Dark. ThemeResource lookups resolve correctly, but the ActualTheme API is
+        // unreliable for mixed-theme subtrees on Uno.
         var theme = PropertyGridTheme == ElementTheme.Default
             ? Application.Current?.RequestedTheme == ApplicationTheme.Light ? ElementTheme.Light : ElementTheme.Dark
             : PropertyGridTheme;
@@ -741,12 +760,12 @@ public sealed partial class PropertyGridControl : UserControl, INotifyPropertyCh
         {
             _backgroundBrush = new SolidColorBrush(Color.FromArgb(255, 30, 30, 30));
             _panelBrush = new SolidColorBrush(Color.FromArgb(255, 37, 37, 38));
-            _categoryBrush = new SolidColorBrush(Color.FromArgb(255, 37, 37, 38));
-            _cellBrush = new SolidColorBrush(Color.FromArgb(255, 30, 30, 30));
-            _borderBrush = new SolidColorBrush(Color.FromArgb(255, 63, 63, 70));
+            _categoryBrush = new SolidColorBrush(Color.FromArgb(255, 45, 45, 48));
+            _cellBrush = new SolidColorBrush(Color.FromArgb(255, 37, 37, 38));
+            _borderBrush = new SolidColorBrush(Color.FromArgb(255, 63, 64, 72));
             _foregroundBrush = new SolidColorBrush(Color.FromArgb(255, 212, 212, 212));
-            _mutedForegroundBrush = new SolidColorBrush(Color.FromArgb(255, 133, 133, 133));
-            _overrideIndicatorBrush = new SolidColorBrush(Color.FromArgb(255, 0, 122, 204));
+            _mutedForegroundBrush = new SolidColorBrush(Color.FromArgb(255, 138, 138, 138));
+            _overrideIndicatorBrush = new SolidColorBrush(Color.FromArgb(255, 55, 148, 255));
         }
 
         if (RootControl is null)
@@ -756,6 +775,8 @@ public sealed partial class PropertyGridControl : UserControl, INotifyPropertyCh
         HeaderPanel.Background = _panelBrush;
         ArrangeByPanel.Background = _panelBrush;
         ObjectGlyph.Foreground = _mutedForegroundBrush;
+        ApplyToggleButtonTheme(PropertiesButton, theme);
+        ApplyToggleButtonTheme(EventsButton, theme);
         NameLabel.Foreground = _foregroundBrush;
         TypeLabel.Foreground = _foregroundBrush;
         ObjectTypeTextBlock.Foreground = _foregroundBrush;
@@ -773,6 +794,38 @@ public sealed partial class PropertyGridControl : UserControl, INotifyPropertyCh
         ArrangeByComboBox.Background = _cellBrush;
         ArrangeByComboBox.BorderBrush = _borderBrush;
         ApplyComboBoxResources(ArrangeByComboBox);
+
+    }
+
+    void ApplyToggleButtonTheme(ToggleButton button, ElementTheme theme)
+    {
+        var isDark = theme == ElementTheme.Dark;
+        var fg = _foregroundBrush;
+        var hover = new SolidColorBrush(isDark ? Color.FromArgb(255, 0x2D, 0x2D, 0x30) : Color.FromArgb(255, 0xE8, 0xE8, 0xE8));
+        var checkedBg = new SolidColorBrush(isDark ? Color.FromArgb(255, 0x09, 0x47, 0x71) : Color.FromArgb(255, 0xCC, 0xE4, 0xF7));
+        button.Background = _cellBrush;
+        button.Foreground = fg;
+        button.BorderBrush = _borderBrush;
+        button.Resources["ToggleButtonForeground"] = fg;
+        button.Resources["ToggleButtonForegroundChecked"] = fg;
+        button.Resources["ToggleButtonForegroundCheckedPointerOver"] = fg;
+        button.Resources["ToggleButtonForegroundPointerOver"] = fg;
+        button.Resources["ToggleButtonBackground"] = _cellBrush;
+        button.Resources["ToggleButtonBackgroundPointerOver"] = hover;
+        button.Resources["ToggleButtonBackgroundChecked"] = checkedBg;
+        button.Resources["ToggleButtonBackgroundCheckedPointerOver"] = checkedBg;
+        button.Resources["ToggleButtonBorderBrush"] = _borderBrush;
+        button.Resources["ToggleButtonBorderBrushChecked"] = _borderBrush;
+        button.Resources["ToggleButtonBorderBrushCheckedPointerOver"] = _borderBrush;
+    }
+
+    void NotifyEditorsThemeChanged()
+    {
+        var theme = PropertyGridTheme == ElementTheme.Default
+            ? Application.Current?.RequestedTheme == ApplicationTheme.Light ? ElementTheme.Light : ElementTheme.Dark
+            : PropertyGridTheme;
+        foreach (var cb in _editorThemeCallbacks)
+            cb(theme);
     }
 
     void ApplyTextControlResources(Control control)
@@ -786,6 +839,22 @@ public sealed partial class PropertyGridControl : UserControl, INotifyPropertyCh
         control.Resources["TextControlBorderBrush"] = _borderBrush;
         control.Resources["TextControlBorderBrushPointerOver"] = _mutedForegroundBrush;
         control.Resources["TextControlBorderBrushFocused"] = _overrideIndicatorBrush;
+        // On Uno, ThemeResource for placeholder text inside the TextBox template resolves at
+        // app level rather than PropertyGrid scope. Walk the visual tree and set it directly.
+        SetPlaceholderForeground(control, _mutedForegroundBrush);
+    }
+
+    static void SetPlaceholderForeground(DependencyObject root, Brush brush)
+    {
+        var count = VisualTreeHelper.GetChildrenCount(root);
+        for (var i = 0; i < count; i++)
+        {
+            var child = VisualTreeHelper.GetChild(root, i);
+            if (child is TextBlock tb && tb.Name == "PlaceholderTextContentPresenter")
+                tb.Foreground = brush;
+            else
+                SetPlaceholderForeground(child, brush);
+        }
     }
 
     void ApplyComboBoxResources(ComboBox comboBox)
@@ -802,6 +871,17 @@ public sealed partial class PropertyGridControl : UserControl, INotifyPropertyCh
         comboBox.Resources["ComboBoxDropDownGlyphForeground"] = _foregroundBrush;
         comboBox.Resources["ComboBoxDropDownGlyphForegroundPointerOver"] = _foregroundBrush;
         comboBox.Resources["ComboBoxDropDownGlyphForegroundPressed"] = _foregroundBrush;
+        comboBox.Resources["ComboBoxDropDownBackground"] = _cellBrush;
+        comboBox.Resources["ComboBoxDropDownBorderBrush"] = _borderBrush;
+        comboBox.Resources["ComboBoxDropDownForeground"] = _foregroundBrush;
+        comboBox.Resources["ComboBoxItemBackground"] = _cellBrush;
+        comboBox.Resources["ComboBoxItemBackgroundPointerOver"] = _panelBrush;
+        comboBox.Resources["ComboBoxItemBackgroundPressed"] = _panelBrush;
+        comboBox.Resources["ComboBoxItemBackgroundSelected"] = _panelBrush;
+        comboBox.Resources["ComboBoxItemBackgroundSelectedPointerOver"] = _panelBrush;
+        comboBox.Resources["ComboBoxItemForeground"] = _foregroundBrush;
+        comboBox.Resources["ComboBoxItemForegroundPointerOver"] = _foregroundBrush;
+        comboBox.Resources["ComboBoxItemForegroundSelected"] = _foregroundBrush;
     }
 
     void OnViewModeChecked(object sender, RoutedEventArgs e)

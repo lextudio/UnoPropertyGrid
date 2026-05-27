@@ -17,4 +17,6 @@ public sealed class PropertyGridEditorContext
     public BindingMode BindingMode { get; init; } = BindingMode.TwoWay;
     public IServiceProvider? Services { get; init; }
     public Action<object?>? SetValue { get; init; }
+    public event Action<ElementTheme>? ThemeChanged;
+    internal void RaiseThemeChanged(ElementTheme theme) => ThemeChanged?.Invoke(theme);
 }

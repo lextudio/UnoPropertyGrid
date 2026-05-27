@@ -22,6 +22,36 @@ sealed class DateEditorProvider : IPropertyGridEditorProvider
             && !context.Descriptor.IsReadOnly;
     }
 
+    static void ApplyCalendarTheme(CalendarView calendar, ElementTheme theme)
+    {
+        var isDark = theme == ElementTheme.Dark;
+        var bg = new SolidColorBrush(isDark ? Color.FromArgb(255, 0x25, 0x25, 0x26) : Color.FromArgb(255, 0xFF, 0xFF, 0xFF));
+        var fg = new SolidColorBrush(isDark ? Color.FromArgb(255, 0xD4, 0xD4, 0xD4) : Color.FromArgb(255, 0x1E, 0x1E, 0x1E));
+        var hover = new SolidColorBrush(isDark ? Color.FromArgb(255, 0x55, 0x55, 0x58) : Color.FromArgb(255, 0xD0, 0xD0, 0xD0));
+        var selected = new SolidColorBrush(isDark ? Color.FromArgb(255, 0x00, 0x78, 0xD4) : Color.FromArgb(255, 0x00, 0x78, 0xD4));
+        var today = new SolidColorBrush(isDark ? Color.FromArgb(255, 0x09, 0x47, 0x71) : Color.FromArgb(255, 0xCC, 0xE4, 0xF7));
+        var muted = new SolidColorBrush(isDark ? Color.FromArgb(255, 0x6B, 0x6B, 0x6B) : Color.FromArgb(255, 0x9E, 0x9E, 0x9E));
+        var border = new SolidColorBrush(isDark ? Color.FromArgb(255, 0x3F, 0x3F, 0x46) : Color.FromArgb(255, 0xCC, 0xCC, 0xCC));
+        calendar.Background = bg;
+        calendar.Foreground = fg;
+        calendar.BorderBrush = border;
+        calendar.CalendarItemBackground = bg;
+        calendar.CalendarItemForeground = fg;
+        calendar.CalendarItemBorderBrush = border;
+        calendar.HoverBorderBrush = hover;
+        calendar.SelectedHoverBorderBrush = selected;
+        calendar.SelectedPressedBorderBrush = selected;
+        calendar.SelectedBorderBrush = selected;
+        calendar.PressedBorderBrush = hover;
+        calendar.TodayBackground = today;
+        calendar.TodayForeground = fg;
+        calendar.SelectedForeground = fg;
+        calendar.TodayBlackoutBackground = today;
+        calendar.BlackoutBackground = hover;
+        calendar.OutOfScopeBackground = bg;
+        calendar.OutOfScopeForeground = muted;
+    }
+
     public FrameworkElement CreateEditor(PropertyGridEditorContext context)
     {
         var panel = new Grid { ColumnSpacing = 6 };
@@ -37,6 +67,8 @@ sealed class DateEditorProvider : IPropertyGridEditorProvider
         };
         Grid.SetColumn(textBox, 1);
         panel.Children.Add(textBox);
+        textBox.Loaded += (_, _) => EditorChrome.ApplyTextBoxTheme(textBox);
+        context.ThemeChanged += t => EditorChrome.ApplyTextBoxTheme(textBox, t);
 
         var calendar = new CalendarView
         {
@@ -44,9 +76,19 @@ sealed class DateEditorProvider : IPropertyGridEditorProvider
             MinWidth = 280
         };
         var flyout = new Flyout { Content = calendar };
-        var button = EditorChrome.CreatePickerButton("\uE787", "Choose date");
+        var button = EditorChrome.CreatePickerButton("\uE787", "Choose date", context);
         button.Flyout = flyout;
         panel.Children.Add(button);
+        ElementTheme _calTheme = ElementTheme.Default;
+        void ApplyDateTheme(ElementTheme? t = null)
+        {
+            _calTheme = t ?? EditorChrome.GetEffectiveTheme(button);
+            calendar.RequestedTheme = _calTheme;
+        }
+        button.Loaded += (_, _) => ApplyDateTheme();
+        button.ActualThemeChanged += (_, _) => ApplyDateTheme();
+        flyout.Opening += (_, _) => ApplyCalendarTheme(calendar, _calTheme == ElementTheme.Default ? EditorChrome.GetEffectiveTheme(button) : _calTheme);
+        context.ThemeChanged += t => ApplyDateTheme(t);
 
         calendar.SelectedDatesChanged += (_, args) =>
         {
