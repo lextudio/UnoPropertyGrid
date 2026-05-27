@@ -40,6 +40,10 @@
     <PackageReference Include="Microsoft.WindowsAppSDK" Condition="'$(TargetFramework)' == 'net10.0-windows10.0.19041.0'" />
   </ItemGroup>
 
+  <ItemGroup Condition="'$(Configuration)' == 'Debug'">
+    <PackageReference Include="LeXtudio.DevFlow.Agent.Uno" />
+  </ItemGroup>
+
   <ItemGroup Condition="'$(TargetFramework)' == 'net10.0-windows10.0.19041.0'">
     <Compile Remove="Platforms\\**" />
   </ItemGroup>
