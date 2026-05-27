@@ -190,9 +190,10 @@
 
         <Grid
             x:Name="HeaderPanel"
-            Padding="8,6,8,4"
+            Padding="8,10,8,10"
             Background="{ThemeResource PropertyGridPanelBrush}"
-            ColumnSpacing="6">
+            ColumnSpacing="6"
+            RowSpacing="8">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="26" />
                 <ColumnDefinition Width="34" />
@@ -208,7 +209,7 @@
                 x:Name="ObjectGlyph"
                 Grid.RowSpan="2"
                 VerticalAlignment="Center"
-                FontSize="18"
+                FontSize="16"
                 Foreground="{ThemeResource PropertyGridMutedForegroundBrush}"
                 Glyph="&#xE8B7;" />
             <TextBlock
@@ -236,14 +237,16 @@
             <StackPanel
                 Grid.Column="3"
                 Orientation="Horizontal"
-                Spacing="2">
+                Spacing="0">
                 <ToggleButton
                     x:Name="PropertiesButton"
-                    Width="24"
+                    Width="22"
                     Height="22"
                     Padding="0"
                     Background="{ThemeResource PropertyGridCellBrush}"
                     BorderBrush="{ThemeResource PropertyGridBorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="0"
                     Foreground="{ThemeResource PropertyGridForegroundBrush}"
                     Checked="OnViewModeChecked"
                     IsChecked="True"
@@ -252,11 +255,13 @@
                 </ToggleButton>
                 <ToggleButton
                     x:Name="EventsButton"
-                    Width="24"
+                    Width="22"
                     Height="22"
                     Padding="0"
                     Background="{ThemeResource PropertyGridCellBrush}"
                     BorderBrush="{ThemeResource PropertyGridBorderBrush}"
+                    BorderThickness="1,1,1,1"
+                    CornerRadius="0"
                     Foreground="{ThemeResource PropertyGridForegroundBrush}"
                     Checked="OnViewModeChecked"
                     ToolTipService.ToolTip="Events">
@@ -287,7 +292,7 @@
         <Grid Grid.Row="1" Margin="8,4,8,3" Background="{ThemeResource PropertyGridPanelBrush}">
             <lextudio:TextBox
                 x:Name="SearchBox"
-                MinHeight="24"
+                MinHeight="22"
                 Padding="4,2,28,2"
                 Background="{ThemeResource PropertyGridCellBrush}"
                 BorderBrush="{ThemeResource PropertyGridBorderBrush}"
@@ -353,7 +358,7 @@
                 <Grid>
                     <StackPanel x:Name="CategorizedRowsPanel" />
                     <StackPanel x:Name="FlatRowsPanel" Visibility="Collapsed" />
-                    <StackPanel x:Name="EventRowsPanel" Visibility="Collapsed" />
+                    <StackPanel x:Name="EventRowsPanel" Margin="0,8,0,0" Visibility="Collapsed" />
                 </Grid>
             </ScrollViewer>
 

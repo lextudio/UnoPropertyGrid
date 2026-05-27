@@ -40,7 +40,7 @@ sealed class BrushSwatchEditorProvider : IPropertyGridEditorProvider
             var button = new Button
             {
                 Width = 24,
-                Height = 22,
+                Height = EditorChrome.RowControlHeight - 2,
                 Padding = new Thickness(0),
                 Background = new SolidColorBrush(option.Color),
                 BorderBrush = new SolidColorBrush(Microsoft.UI.Colors.Gray),

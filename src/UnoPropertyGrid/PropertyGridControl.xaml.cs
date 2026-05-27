@@ -19,6 +19,9 @@ public sealed partial class PropertyGridControl : UserControl, INotifyPropertyCh
     const double DefaultNameColumnWidth = 220d;
     const double MinNameColumnWidth = 120d;
     const double MinValueColumnWidth = 140d;
+    // Uniform vertical gap between rows and between a row and its section edges.
+    // Matches the header panel's RowSpacing so spacing is consistent throughout.
+    const double RowGap = 8d;
 
     public static readonly DependencyProperty SelectedObjectProperty =
         DependencyProperty.Register(
@@ -437,6 +440,9 @@ public sealed partial class PropertyGridControl : UserControl, INotifyPropertyCh
         var container = new StackPanel();
         var childrenPanel = new StackPanel
         {
+            // Top gap so the band→first-row spacing matches the uniform row gap; each row
+            // contributes its own bottom gap, so band→box, box→box and box→section are equal.
+            Margin = new Thickness(0, RowGap, 0, 0),
             Visibility = category.IsExpanded ? Visibility.Visible : Visibility.Collapsed
         };
 
@@ -465,8 +471,8 @@ public sealed partial class PropertyGridControl : UserControl, INotifyPropertyCh
             Background = _categoryBrush,
             BorderBrush = _borderBrush,
             BorderThickness = new Thickness(0),
-            Padding = new Thickness(0),
-            MinHeight = 24,
+            Padding = new Thickness(0, 3, 0, 3),
+            MinHeight = 26,
             Content = CreateCategoryHeaderContent(category),
             Foreground = _foregroundBrush
         };
@@ -504,7 +510,7 @@ public sealed partial class PropertyGridControl : UserControl, INotifyPropertyCh
             Text = category.Name,
             Foreground = _foregroundBrush,
             FontSize = 12,
-            FontWeight = new FontWeight { Weight = 600 },
+            FontWeight = new FontWeight { Weight = 400 },
             VerticalAlignment = VerticalAlignment.Center
         };
         Grid.SetColumn(text, 1);
@@ -531,7 +537,7 @@ public sealed partial class PropertyGridControl : UserControl, INotifyPropertyCh
         row.Children.Add(CreateNameCell(property.DisplayName));
 
         var editorBorder = CreateCellBorder(1);
-        editorBorder.Padding = new Thickness(4, 1, 4, 1);
+        editorBorder.Padding = new Thickness(4, 0, 4, 0);
         editorBorder.Child = CreateEditor(property);
         row.Children.Add(editorBorder);
 
@@ -541,6 +547,10 @@ public sealed partial class PropertyGridControl : UserControl, INotifyPropertyCh
             BorderBrush = _borderBrush,
             BorderThickness = drawSeparator ? new Thickness(0, 0, 0, 1) : new Thickness(0),
             Background = _backgroundBrush,
+            // A single bottom gap per row. Combined with the row container's top gap this
+            // makes the spacing uniform: band→box, box→box, and box→section are all RowGap,
+            // instead of box→box being doubled by two adjacent symmetric paddings.
+            Margin = drawSeparator ? new Thickness(0) : new Thickness(0, 0, 0, RowGap),
             Child = row
         };
         return outer;
@@ -591,28 +601,43 @@ public sealed partial class PropertyGridControl : UserControl, INotifyPropertyCh
 
     FrameworkElement CreateEventRow(PropertyGridEventViewModel @event)
     {
-        var row = CreateRowGrid(includeIndicatorColumn: false);
+        // Mirror the property row layout: name / value* / trailing indicator-width column so
+        // the handler box right edge aligns with property editors. The trailing column stays
+        // empty (events have no override indicator).
+        var row = CreateRowGrid();
         row.Children.Add(CreateNameCell(@event.DisplayName));
 
         var textBox = new TextBox
         {
             Text = @event.HandlerName,
             FontSize = 12,
-            Padding = new Thickness(4, 2, 4, 2),
-            MinHeight = 24,
+            Padding = new Thickness(4, 1, 4, 1),
+            MinHeight = 22,
+            CornerRadius = new CornerRadius(0),
+            BorderThickness = new Thickness(1),
             Foreground = _foregroundBrush,
-            Background = _backgroundBrush,
-            BorderBrush = _borderBrush
+            Background = _cellBrush,
+            BorderBrush = _borderBrush,
+            PlaceholderForeground = _mutedForegroundBrush
         };
         ApplyTextControlResources(textBox);
+        // The template applies after the row is in the tree, so the placeholder color must be
+        // re-applied on Loaded (the call inside ApplyTextControlResources finds nothing yet).
+        textBox.Loaded += (_, _) => SetPlaceholderForeground(textBox, _mutedForegroundBrush);
         textBox.TextChanged += (_, _) => @event.HandlerName = textBox.Text;
-        Grid.SetColumn(textBox, 1);
-        row.Children.Add(textBox);
+
+        var editorBorder = CreateCellBorder(1);
+        editorBorder.Padding = new Thickness(4, 0, 4, 0);
+        editorBorder.Child = textBox;
+        row.Children.Add(editorBorder);
+
         var outer = new Border
         {
             BorderBrush = _borderBrush,
             BorderThickness = new Thickness(0),
             Background = _backgroundBrush,
+            // Same uniform per-row gap as property rows.
+            Margin = new Thickness(0, 0, 0, RowGap),
             Child = row
         };
         return outer;
@@ -622,21 +647,21 @@ public sealed partial class PropertyGridControl : UserControl, INotifyPropertyCh
     {
         var row = new Grid
         {
-            MinHeight = 24,
+            MinHeight = 22,
             Background = _backgroundBrush,
             ColumnSpacing = 0
         };
         row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(NameColumnWidth) });
         row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         if (includeIndicatorColumn)
-            row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(14) });
+            row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(20) });
         return row;
     }
 
     Border CreateNameCell(string text)
     {
         var border = CreateCellBorder(0);
-        border.Padding = new Thickness(20, 2, 4, 2);
+        border.Padding = new Thickness(12, 0, 4, 0);
         border.Child = new TextBlock
         {
             Text = text,
@@ -679,7 +704,7 @@ public sealed partial class PropertyGridControl : UserControl, INotifyPropertyCh
         if (RowsHost is null || RowsHost.ActualWidth <= 0)
             return Math.Max(MinNameColumnWidth, width);
 
-        var maxWidth = Math.Max(MinNameColumnWidth, RowsHost.ActualWidth - MinValueColumnWidth - 14);
+        var maxWidth = Math.Max(MinNameColumnWidth, RowsHost.ActualWidth - MinValueColumnWidth - 20);
         return Math.Clamp(width, MinNameColumnWidth, maxWidth);
     }
 
@@ -696,11 +721,11 @@ public sealed partial class PropertyGridControl : UserControl, INotifyPropertyCh
     Border CreateIndicatorCell(int column, PropertyGridPropertyViewModel property)
     {
         var border = CreateCellBorder(column);
-        border.Padding = new Thickness(3, 0, 3, 0);
+        border.Padding = new Thickness(4, 0, 8, 0);
         var indicator = new Rectangle
         {
-            Width = 6,
-            Height = 6,
+            Width = 8,
+            Height = 8,
             Stroke = _mutedForegroundBrush,
             StrokeThickness = 1,
             HorizontalAlignment = HorizontalAlignment.Center,
@@ -795,6 +820,12 @@ public sealed partial class PropertyGridControl : UserControl, INotifyPropertyCh
         ArrangeByComboBox.BorderBrush = _borderBrush;
         ApplyComboBoxResources(ArrangeByComboBox);
 
+        // The description pane's ThemeResource brushes resolve at app level and don't follow
+        // a dark→light switch, so set them explicitly (only matters when ShowDescriptionPane).
+        DescriptionPane.Background = _panelBrush;
+        DescriptionPane.BorderBrush = _borderBrush;
+        DescriptionTitle.Foreground = _foregroundBrush;
+        DescriptionText.Foreground = _mutedForegroundBrush;
     }
 
     void ApplyToggleButtonTheme(ToggleButton button, ElementTheme theme)
@@ -802,7 +833,9 @@ public sealed partial class PropertyGridControl : UserControl, INotifyPropertyCh
         var isDark = theme == ElementTheme.Dark;
         var fg = _foregroundBrush;
         var hover = new SolidColorBrush(isDark ? Color.FromArgb(255, 0x2D, 0x2D, 0x30) : Color.FromArgb(255, 0xE8, 0xE8, 0xE8));
-        var checkedBg = new SolidColorBrush(isDark ? Color.FromArgb(255, 0x09, 0x47, 0x71) : Color.FromArgb(255, 0xCC, 0xE4, 0xF7));
+        // VS shows the selected segment with a blue outline, not a blue fill. Keep the
+        // checked background the same as unchecked and signal selection via the border.
+        var accent = new SolidColorBrush(Color.FromArgb(255, 0x00, 0x78, 0xD4));
         button.Background = _cellBrush;
         button.Foreground = fg;
         button.BorderBrush = _borderBrush;
@@ -812,11 +845,13 @@ public sealed partial class PropertyGridControl : UserControl, INotifyPropertyCh
         button.Resources["ToggleButtonForegroundPointerOver"] = fg;
         button.Resources["ToggleButtonBackground"] = _cellBrush;
         button.Resources["ToggleButtonBackgroundPointerOver"] = hover;
-        button.Resources["ToggleButtonBackgroundChecked"] = checkedBg;
-        button.Resources["ToggleButtonBackgroundCheckedPointerOver"] = checkedBg;
+        button.Resources["ToggleButtonBackgroundChecked"] = _cellBrush;
+        button.Resources["ToggleButtonBackgroundCheckedPointerOver"] = hover;
         button.Resources["ToggleButtonBorderBrush"] = _borderBrush;
-        button.Resources["ToggleButtonBorderBrushChecked"] = _borderBrush;
-        button.Resources["ToggleButtonBorderBrushCheckedPointerOver"] = _borderBrush;
+        button.Resources["ToggleButtonBorderBrushPointerOver"] = _borderBrush;
+        button.Resources["ToggleButtonBorderBrushChecked"] = accent;
+        button.Resources["ToggleButtonBorderBrushCheckedPointerOver"] = accent;
+        button.Resources["ToggleButtonBorderBrushCheckedPressed"] = accent;
     }
 
     void NotifyEditorsThemeChanged()

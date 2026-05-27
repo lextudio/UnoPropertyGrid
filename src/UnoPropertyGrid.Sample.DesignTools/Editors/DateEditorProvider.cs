@@ -63,7 +63,8 @@ sealed class DateEditorProvider : IPropertyGridEditorProvider
         {
             Text = initial.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
             PlaceholderText = "yyyy-MM-dd",
-            MinHeight = 30,
+            MinHeight = EditorChrome.RowControlHeight,
+            Padding = new Thickness(4, 1, 4, 1),
             CornerRadius = new CornerRadius(0),
             BorderThickness = new Thickness(1)
         };

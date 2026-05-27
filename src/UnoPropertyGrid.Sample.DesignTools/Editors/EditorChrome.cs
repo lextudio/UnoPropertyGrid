@@ -15,6 +15,13 @@ namespace UnoPropertyGrid.Sample.DesignTools;
 
 static class EditorChrome
 {
+    /// <summary>
+    /// Shared compact height for interactive editors so every property row stays the same
+    /// height as the VS Properties window. Editors should use this for their box/control
+    /// height rather than hard-coding their own.
+    /// </summary>
+    public const double RowControlHeight = 22;
+
     static void ApplyButtonTheme(Button button, ElementTheme? theme = null)
     {
         var isDark = (theme ?? GetEffectiveTheme(button)) == ElementTheme.Dark;
@@ -66,8 +73,8 @@ static class EditorChrome
     {
         var button = new Button
         {
-            Width = 30,
-            Height = 30,
+            Width = RowControlHeight,
+            Height = RowControlHeight,
             Padding = new Thickness(0),
             BorderThickness = new Thickness(0),
             CornerRadius = new CornerRadius(0),

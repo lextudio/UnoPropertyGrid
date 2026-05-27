@@ -50,7 +50,7 @@ sealed class CityMapEditorProvider : IPropertyGridEditorProvider
             ItemsSource = Cities.Select(city => city.Name).ToArray(),
             Text = initial,
             PlaceholderText = "City",
-            MinHeight = 30,
+            MinHeight = EditorChrome.RowControlHeight,
             BorderThickness = new Thickness(0)
         };
         Grid.SetColumn(comboBox, 1);

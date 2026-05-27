@@ -33,7 +33,8 @@ sealed class TimeEditorProvider : IPropertyGridEditorProvider
         {
             Text = initial.ToString(@"hh\:mm", CultureInfo.InvariantCulture),
             PlaceholderText = "HH:mm",
-            MinHeight = 30,
+            MinHeight = EditorChrome.RowControlHeight,
+            Padding = new Thickness(4, 1, 4, 1),
             CornerRadius = new CornerRadius(0),
             BorderThickness = new Thickness(1)
         };
