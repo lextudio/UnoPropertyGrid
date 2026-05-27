@@ -52,6 +52,13 @@ public sealed partial class MainPage : Page
             PropertyGrid.SelectedObject = item.Value;
     }
 
+    void ThemeToggle_Toggled(object sender, RoutedEventArgs e)
+    {
+        var theme = ThemeToggle.IsOn ? ElementTheme.Dark : ElementTheme.Light;
+        RequestedTheme = theme;
+        PropertyGrid.PropertyGridTheme = theme;
+    }
+
     sealed record SampleObject(string Name, object Value)
     {
         public override string ToString() => Name;
