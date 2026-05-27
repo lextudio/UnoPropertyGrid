@@ -86,6 +86,7 @@ public sealed partial class PropertyGridControl : UserControl, INotifyPropertyCh
     SolidColorBrush _backgroundBrush = new(Colors.White);
     SolidColorBrush _panelBrush = new(Colors.White);
     SolidColorBrush _categoryBrush = new(Colors.White);
+    SolidColorBrush _cellBrush = new(Colors.White);
     SolidColorBrush _borderBrush = new(Colors.LightGray);
     SolidColorBrush _foregroundBrush = new(Colors.Black);
     SolidColorBrush _mutedForegroundBrush = new(Colors.Gray);
@@ -730,6 +731,7 @@ public sealed partial class PropertyGridControl : UserControl, INotifyPropertyCh
             _backgroundBrush = new SolidColorBrush(Color.FromArgb(255, 243, 243, 243));
             _panelBrush = new SolidColorBrush(Color.FromArgb(255, 243, 243, 243));
             _categoryBrush = new SolidColorBrush(Color.FromArgb(255, 243, 243, 243));
+            _cellBrush = new SolidColorBrush(Color.FromArgb(255, 255, 255, 255));
             _borderBrush = new SolidColorBrush(Color.FromArgb(255, 208, 208, 208));
             _foregroundBrush = new SolidColorBrush(Color.FromArgb(255, 30, 30, 30));
             _mutedForegroundBrush = new SolidColorBrush(Color.FromArgb(255, 95, 95, 95));
@@ -738,11 +740,12 @@ public sealed partial class PropertyGridControl : UserControl, INotifyPropertyCh
         else
         {
             _backgroundBrush = new SolidColorBrush(Color.FromArgb(255, 30, 30, 30));
-            _panelBrush = new SolidColorBrush(Color.FromArgb(255, 30, 30, 30));
-            _categoryBrush = new SolidColorBrush(Color.FromArgb(255, 30, 30, 30));
+            _panelBrush = new SolidColorBrush(Color.FromArgb(255, 37, 37, 38));
+            _categoryBrush = new SolidColorBrush(Color.FromArgb(255, 37, 37, 38));
+            _cellBrush = new SolidColorBrush(Color.FromArgb(255, 30, 30, 30));
             _borderBrush = new SolidColorBrush(Color.FromArgb(255, 63, 63, 70));
-            _foregroundBrush = new SolidColorBrush(Color.FromArgb(255, 241, 241, 241));
-            _mutedForegroundBrush = new SolidColorBrush(Color.FromArgb(255, 200, 200, 200));
+            _foregroundBrush = new SolidColorBrush(Color.FromArgb(255, 212, 212, 212));
+            _mutedForegroundBrush = new SolidColorBrush(Color.FromArgb(255, 133, 133, 133));
             _overrideIndicatorBrush = new SolidColorBrush(Color.FromArgb(255, 0, 122, 204));
         }
 
@@ -758,16 +761,16 @@ public sealed partial class PropertyGridControl : UserControl, INotifyPropertyCh
         ObjectTypeTextBlock.Foreground = _foregroundBrush;
         SearchGlyph.Foreground = _mutedForegroundBrush;
         SearchBox.Foreground = _foregroundBrush;
-        SearchBox.Background = _backgroundBrush;
+        SearchBox.Background = _cellBrush;
         SearchBox.BorderBrush = _borderBrush;
         ApplyTextControlResources(SearchBox);
         ObjectNameBox.Foreground = _foregroundBrush;
-        ObjectNameBox.Background = _backgroundBrush;
+        ObjectNameBox.Background = _cellBrush;
         ObjectNameBox.BorderBrush = _borderBrush;
         ApplyTextControlResources(ObjectNameBox);
         ArrangeByLabel.Foreground = _foregroundBrush;
         ArrangeByComboBox.Foreground = _foregroundBrush;
-        ArrangeByComboBox.Background = _backgroundBrush;
+        ArrangeByComboBox.Background = _cellBrush;
         ArrangeByComboBox.BorderBrush = _borderBrush;
         ApplyComboBoxResources(ArrangeByComboBox);
     }

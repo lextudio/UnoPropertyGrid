@@ -29,7 +29,7 @@
                         </Grid.ColumnDefinitions>
 
                         <Border
-                            Padding="20,2,4,2"
+                            Padding="12,6,8,6"
                             BorderBrush="{ThemeResource PropertyGridBorderBrush}"
                             BorderThickness="0">
                             <TextBlock
@@ -43,7 +43,7 @@
 
                         <Border
                             Grid.Column="1"
-                            Padding="4,1"
+                            Padding="12,6"
                             BorderBrush="{ThemeResource PropertyGridBorderBrush}"
                             BorderThickness="0">
                             <TextBlock
@@ -122,7 +122,7 @@
                     </Grid.ColumnDefinitions>
 
                     <Border
-                        Padding="20,2,4,2"
+                        Padding="12,6,8,6"
                         BorderBrush="{ThemeResource PropertyGridBorderBrush}"
                         BorderThickness="0,0,0,1">
                         <TextBlock
@@ -137,6 +137,9 @@
                         Grid.Column="1"
                         MinHeight="24"
                         Padding="4,2"
+                        Background="{ThemeResource PropertyGridCellBrush}"
+                        BorderBrush="{ThemeResource PropertyGridBorderBrush}"
+                        Foreground="{ThemeResource PropertyGridForegroundBrush}"
                         FontSize="12"
                         Text="{Binding HandlerName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
 
@@ -224,19 +227,25 @@
                     Width="24"
                     Height="22"
                     Padding="0"
+                    Background="{ThemeResource PropertyGridCellBrush}"
+                    BorderBrush="{ThemeResource PropertyGridBorderBrush}"
+                    Foreground="{ThemeResource PropertyGridForegroundBrush}"
                     Checked="OnViewModeChecked"
                     IsChecked="True"
                     ToolTipService.ToolTip="Properties">
-                    <FontIcon FontSize="13" Glyph="&#xE90F;" />
+                    <FontIcon FontSize="13" Foreground="{ThemeResource PropertyGridForegroundBrush}" Glyph="&#xE90F;" />
                 </ToggleButton>
                 <ToggleButton
                     x:Name="EventsButton"
                     Width="24"
                     Height="22"
                     Padding="0"
+                    Background="{ThemeResource PropertyGridCellBrush}"
+                    BorderBrush="{ThemeResource PropertyGridBorderBrush}"
+                    Foreground="{ThemeResource PropertyGridForegroundBrush}"
                     Checked="OnViewModeChecked"
                     ToolTipService.ToolTip="Events">
-                    <FontIcon FontSize="13" Glyph="&#xE945;" />
+                    <FontIcon FontSize="13" Foreground="{ThemeResource PropertyGridForegroundBrush}" Glyph="&#xE945;" />
                 </ToggleButton>
             </StackPanel>
 
@@ -287,7 +296,7 @@
             Padding="8,0,8,4"
             Background="{ThemeResource PropertyGridPanelBrush}"
             Orientation="Horizontal"
-            Spacing="2">
+            Spacing="8">
             <TextBlock
                 x:Name="ArrangeByLabel"
                 VerticalAlignment="Center"
