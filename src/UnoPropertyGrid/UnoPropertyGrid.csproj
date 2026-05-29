@@ -28,7 +28,7 @@
     <PackageProjectUrl>https://github.com/lextudio/UnoPropertyGrid</PackageProjectUrl>
     <RepositoryUrl>https://github.com/lextudio/UnoPropertyGrid</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
-    <UseNuGetPackage>true</UseNuGetPackage>
+    <UseNuGetPackage>false</UseNuGetPackage>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(TargetFramework)' == 'net10.0-windows10.0.19041.0'">

@@ -94,6 +94,7 @@ public sealed partial class PropertyGridControl : UserControl, INotifyPropertyCh
     SolidColorBrush _foregroundBrush = new(Colors.Black);
     SolidColorBrush _mutedForegroundBrush = new(Colors.Gray);
     SolidColorBrush _overrideIndicatorBrush = new(Colors.Black);
+    SolidColorBrush _focusBorderBrush = new(Colors.Black);
     string _searchText = string.Empty;
     readonly List<Action<ElementTheme>> _editorThemeCallbacks = [];
     // VS-style row selection. The blue/white selection brushes are theme-independent.
@@ -241,8 +242,7 @@ public sealed partial class PropertyGridControl : UserControl, INotifyPropertyCh
         if (!_syncingNameColumnFromSplitter)
             ApplyNameColumnWidth(clampedWidth);
 
-        MarkAllRowsDirty();
-        ShowActiveRows();
+        UpdateRenderedNameColumnWidths(clampedWidth);
     }
 
     void RefreshMembers(object? selectedObject)
@@ -413,6 +413,31 @@ public sealed partial class PropertyGridControl : UserControl, INotifyPropertyCh
         EventRowsPanel.Visibility = showEvents ? Visibility.Visible : Visibility.Collapsed;
 
         NotifyEditorsThemeChanged();
+    }
+
+    void UpdateRenderedNameColumnWidths(double width)
+    {
+        UpdateRenderedNameColumnWidths(CategorizedRowsPanel, width);
+        UpdateRenderedNameColumnWidths(FlatRowsPanel, width);
+        UpdateRenderedNameColumnWidths(EventRowsPanel, width);
+    }
+
+    static void UpdateRenderedNameColumnWidths(DependencyObject? root, double width)
+    {
+        if (root is null)
+            return;
+
+        if (root is Grid grid
+            && grid.ColumnDefinitions.Count >= 2
+            && grid.ColumnDefinitions[0].Width.IsAbsolute
+            && grid.ColumnDefinitions[0].Width.Value >= MinNameColumnWidth)
+        {
+            grid.ColumnDefinitions[0].Width = new GridLength(width);
+        }
+
+        var count = VisualTreeHelper.GetChildrenCount(root);
+        for (var i = 0; i < count; i++)
+            UpdateRenderedNameColumnWidths(VisualTreeHelper.GetChild(root, i), width);
     }
 
     void BuildCategorizedRows()
@@ -679,7 +704,7 @@ public sealed partial class PropertyGridControl : UserControl, INotifyPropertyCh
             BorderBrush = _borderBrush,
             PlaceholderForeground = _mutedForegroundBrush
         };
-        ApplyTextControlResources(textBox);
+        ApplyTextControlResources(textBox, GetEffectivePropertyGridTheme());
         // The template applies after the row is in the tree, so the placeholder color must be
         // re-applied on Loaded (the call inside ApplyTextControlResources finds nothing yet).
         textBox.Loaded += (_, _) => SetPlaceholderForeground(textBox, _mutedForegroundBrush);
@@ -722,7 +747,7 @@ public sealed partial class PropertyGridControl : UserControl, INotifyPropertyCh
     Border CreateNameCell(string text)
     {
         var border = CreateCellBorder(0);
-        border.Padding = new Thickness(12, 0, 4, 0);
+        border.Padding = new Thickness(22, 0, 4, 0);
         border.Child = new TextBlock
         {
             Text = text,
@@ -820,6 +845,13 @@ public sealed partial class PropertyGridControl : UserControl, INotifyPropertyCh
         return border;
     }
 
+    ElementTheme GetEffectivePropertyGridTheme()
+    {
+        return PropertyGridTheme == ElementTheme.Default
+            ? Application.Current?.RequestedTheme == ApplicationTheme.Light ? ElementTheme.Light : ElementTheme.Dark
+            : PropertyGridTheme;
+    }
+
     void ApplyThemeBrushes()
     {
         // Do not use RootControl.ActualTheme here. On Uno Platform, ActualTheme on child
@@ -827,9 +859,7 @@ public sealed partial class PropertyGridControl : UserControl, INotifyPropertyCh
         // explicit RequestedTheme, so it returns Light even when RootControl.RequestedTheme
         // is Dark. ThemeResource lookups resolve correctly, but the ActualTheme API is
         // unreliable for mixed-theme subtrees on Uno.
-        var theme = PropertyGridTheme == ElementTheme.Default
-            ? Application.Current?.RequestedTheme == ApplicationTheme.Light ? ElementTheme.Light : ElementTheme.Dark
-            : PropertyGridTheme;
+        var theme = GetEffectivePropertyGridTheme();
 
         if (theme == ElementTheme.Light)
         {
@@ -841,6 +871,7 @@ public sealed partial class PropertyGridControl : UserControl, INotifyPropertyCh
             _foregroundBrush = new SolidColorBrush(Color.FromArgb(255, 30, 30, 30));
             _mutedForegroundBrush = new SolidColorBrush(Color.FromArgb(255, 95, 95, 95));
             _overrideIndicatorBrush = new SolidColorBrush(Color.FromArgb(255, 0, 122, 204));
+            _focusBorderBrush = new SolidColorBrush(Color.FromArgb(255, 0, 122, 204));
         }
         else
         {
@@ -851,7 +882,8 @@ public sealed partial class PropertyGridControl : UserControl, INotifyPropertyCh
             _borderBrush = new SolidColorBrush(Color.FromArgb(255, 63, 64, 72));
             _foregroundBrush = new SolidColorBrush(Color.FromArgb(255, 212, 212, 212));
             _mutedForegroundBrush = new SolidColorBrush(Color.FromArgb(255, 138, 138, 138));
-            _overrideIndicatorBrush = new SolidColorBrush(Color.FromArgb(255, 55, 148, 255));
+            _overrideIndicatorBrush = new SolidColorBrush(Colors.White);
+            _focusBorderBrush = new SolidColorBrush(Color.FromArgb(255, 55, 148, 255));
         }
 
         if (RootControl is null)
@@ -870,11 +902,11 @@ public sealed partial class PropertyGridControl : UserControl, INotifyPropertyCh
         SearchBox.Foreground = _foregroundBrush;
         SearchBox.Background = _cellBrush;
         SearchBox.BorderBrush = _borderBrush;
-        ApplyTextControlResources(SearchBox);
+        ApplyTextControlResources(SearchBox, theme);
         ObjectNameBox.Foreground = _foregroundBrush;
         ObjectNameBox.Background = _cellBrush;
         ObjectNameBox.BorderBrush = _borderBrush;
-        ApplyTextControlResources(ObjectNameBox);
+        ApplyTextControlResources(ObjectNameBox, theme);
         ArrangeByLabel.Foreground = _foregroundBrush;
         ArrangeByComboBox.Foreground = _foregroundBrush;
         ArrangeByComboBox.Background = _cellBrush;
@@ -936,27 +968,52 @@ public sealed partial class PropertyGridControl : UserControl, INotifyPropertyCh
 
     void NotifyEditorsThemeChanged()
     {
-        var theme = PropertyGridTheme == ElementTheme.Default
-            ? Application.Current?.RequestedTheme == ApplicationTheme.Light ? ElementTheme.Light : ElementTheme.Dark
-            : PropertyGridTheme;
+        var theme = GetEffectivePropertyGridTheme();
         foreach (var cb in _editorThemeCallbacks)
             cb(theme);
     }
 
-    void ApplyTextControlResources(Control control)
+    void ApplyTextControlResources(Control control, ElementTheme theme)
     {
-        control.Resources["TextControlBackground"] = _backgroundBrush;
-        control.Resources["TextControlBackgroundPointerOver"] = _panelBrush;
-        control.Resources["TextControlBackgroundFocused"] = _backgroundBrush;
-        control.Resources["TextControlForeground"] = _foregroundBrush;
-        control.Resources["TextControlForegroundFocused"] = _foregroundBrush;
-        control.Resources["TextControlPlaceholderForeground"] = _mutedForegroundBrush;
-        control.Resources["TextControlBorderBrush"] = _borderBrush;
-        control.Resources["TextControlBorderBrushPointerOver"] = _mutedForegroundBrush;
-        control.Resources["TextControlBorderBrushFocused"] = _overrideIndicatorBrush;
+        var hoverBackground = theme == ElementTheme.Dark ? _backgroundBrush : _panelBrush;
+        ApplyTextControlResourcesCore(control, hoverBackground);
+        if (control is TextBox lextudioTextBox)
+            lextudioTextBox.RefreshThemeResources();
         // On Uno, ThemeResource for placeholder text inside the TextBox template resolves at
         // app level rather than PropertyGrid scope. Walk the visual tree and set it directly.
         SetPlaceholderForeground(control, _mutedForegroundBrush);
+    }
+
+    void ApplyTextControlResourcesCore(Control control, Brush hoverBackground)
+    {
+        control.Background = _cellBrush;
+        control.Foreground = _foregroundBrush;
+        control.BorderBrush = _borderBrush;
+        control.Resources["TextControlBackground"] = _cellBrush;
+        control.Resources["TextControlBackgroundPointerOver"] = hoverBackground;
+        control.Resources["TextControlBackgroundFocused"] = _cellBrush;
+        control.Resources["TextControlBackgroundDisabled"] = _cellBrush;
+        control.Resources["TextControlBackgroundReadOnly"] = _cellBrush;
+        control.Resources["TextControlBackgroundReadOnlyPointerOver"] = hoverBackground;
+        control.Resources["TextControlBackgroundReadOnlyFocused"] = _cellBrush;
+        control.Resources["TextControlBackgroundFocusedPointerOver"] = _cellBrush;
+        control.Resources["TextControlForeground"] = _foregroundBrush;
+        control.Resources["TextControlForegroundPointerOver"] = _foregroundBrush;
+        control.Resources["TextControlForegroundFocused"] = _foregroundBrush;
+        control.Resources["TextControlForegroundDisabled"] = _foregroundBrush;
+        control.Resources["TextControlForegroundReadOnly"] = _foregroundBrush;
+        control.Resources["TextControlForegroundReadOnlyPointerOver"] = _foregroundBrush;
+        control.Resources["TextControlForegroundReadOnlyFocused"] = _foregroundBrush;
+        control.Resources["TextControlPlaceholderForeground"] = _mutedForegroundBrush;
+        control.Resources["TextControlPlaceholderForegroundPointerOver"] = _mutedForegroundBrush;
+        control.Resources["TextControlPlaceholderForegroundFocused"] = _mutedForegroundBrush;
+        control.Resources["TextControlBorderBrush"] = _borderBrush;
+        control.Resources["TextControlBorderBrushPointerOver"] = _mutedForegroundBrush;
+        control.Resources["TextControlBorderBrushFocused"] = _focusBorderBrush;
+        control.Resources["TextControlBorderBrushDisabled"] = _borderBrush;
+        control.Resources["TextControlBorderBrushReadOnly"] = _borderBrush;
+        control.Resources["TextControlBorderBrushReadOnlyPointerOver"] = _mutedForegroundBrush;
+        control.Resources["TextControlBorderBrushReadOnlyFocused"] = _focusBorderBrush;
     }
 
     static void SetPlaceholderForeground(DependencyObject root, Brush brush)
@@ -982,7 +1039,7 @@ public sealed partial class PropertyGridControl : UserControl, INotifyPropertyCh
         comboBox.Resources["ComboBoxForegroundPressed"] = _foregroundBrush;
         comboBox.Resources["ComboBoxBorderBrush"] = _borderBrush;
         comboBox.Resources["ComboBoxBorderBrushPointerOver"] = _mutedForegroundBrush;
-        comboBox.Resources["ComboBoxBorderBrushPressed"] = _overrideIndicatorBrush;
+        comboBox.Resources["ComboBoxBorderBrushPressed"] = _focusBorderBrush;
         comboBox.Resources["ComboBoxDropDownGlyphForeground"] = _foregroundBrush;
         comboBox.Resources["ComboBoxDropDownGlyphForegroundPointerOver"] = _foregroundBrush;
         comboBox.Resources["ComboBoxDropDownGlyphForegroundPressed"] = _foregroundBrush;

@@ -39,15 +39,16 @@ sealed class VolumeEditorProvider : IPropertyGridEditorProvider
 
         const int segmentCount = 7;
         const double gap = 4;
-        var activeBrush = new SolidColorBrush(Color.FromArgb(255, 40, 120, 212));
-        var inactiveBrush = new SolidColorBrush(Color.FromArgb(255, 180, 186, 196));
+        var activeBrush = new SolidColorBrush();
+        var inactiveBrush = new SolidColorBrush();
         var segments = new List<VolumeSegment>(segmentCount);
+        double TopAt(double x) => trackBottom - (trackBottom - trackTop) * (x - trackLeft) / (trackRight - trackLeft);
         for (var i = 0; i < segmentCount; i++)
         {
             var x0 = trackLeft + (trackRight - trackLeft) * i / segmentCount + gap / 2;
             var x1 = trackLeft + (trackRight - trackLeft) * (i + 1) / segmentCount - gap / 2;
-            var y0 = trackBottom - (trackBottom - trackTop) * i / segmentCount;
-            var y1 = trackBottom - (trackBottom - trackTop) * (i + 1) / segmentCount;
+            var y0 = TopAt(x0);
+            var y1 = TopAt(x1);
             var inactiveSegment = CreateVolumeSegment(x0, x1, y0, y1, inactiveBrush);
             var activeSegment = CreateVolumeSegment(x0, x1, y0, y1, activeBrush);
             var activeClip = new RectangleGeometry();
@@ -79,15 +80,22 @@ sealed class VolumeEditorProvider : IPropertyGridEditorProvider
             TextAlignment = TextAlignment.Right
         };
         panel.Children.Add(label);
-        void ApplyLabelTheme(ElementTheme? t = null)
+        void ApplyVolumeTheme(ElementTheme? t = null)
         {
             var isDark = (t ?? EditorChrome.GetEffectiveTheme(label)) == ElementTheme.Dark;
             label.Foreground = new SolidColorBrush(isDark
                 ? Color.FromArgb(255, 0xD4, 0xD4, 0xD4)
                 : Color.FromArgb(255, 0x1E, 0x1E, 0x1E));
+            activeBrush.Color = isDark
+                ? Color.FromArgb(255, 0xD7, 0xBA, 0x7D)
+                : Color.FromArgb(255, 0xA6, 0x5F, 0x00);
+            inactiveBrush.Color = isDark
+                ? Color.FromArgb(255, 0x5A, 0x5A, 0x5A)
+                : Color.FromArgb(255, 0xB4, 0xBA, 0xC4);
         }
-        label.Loaded += (_, _) => ApplyLabelTheme();
-        context.ThemeChanged += t => ApplyLabelTheme(t);
+        label.Loaded += (_, _) => ApplyVolumeTheme();
+        context.ThemeChanged += t => ApplyVolumeTheme(t);
+        ApplyVolumeTheme();
 
         SetSegments(value);
 
