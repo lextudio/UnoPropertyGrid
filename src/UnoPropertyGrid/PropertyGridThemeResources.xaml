@@ -2,50 +2,15 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
-    <SolidColorBrush x:Key="PropertyGridBackgroundBrush" Color="#1E1E1E" />
-    <SolidColorBrush x:Key="PropertyGridPanelBrush" Color="#252526" />
-    <SolidColorBrush x:Key="PropertyGridCellBrush" Color="#252526" />
-    <SolidColorBrush x:Key="PropertyGridCategoryBrush" Color="#2D2D30" />
-    <SolidColorBrush x:Key="PropertyGridBorderBrush" Color="#3F3F46" />
-    <SolidColorBrush x:Key="PropertyGridForegroundBrush" Color="#D4D4D4" />
-    <SolidColorBrush x:Key="PropertyGridMutedForegroundBrush" Color="#8A8A8A" />
-    <SolidColorBrush x:Key="PropertyGridAccentBrush" Color="#3794FF" />
-    <FontFamily x:Key="PropertyGridFontFamily">Open Sans</FontFamily>
-    <SolidColorBrush x:Key="TextControlBackground" Color="#1E1E1E" />
-    <SolidColorBrush x:Key="TextControlBackgroundPointerOver" Color="#2A2D2F" />
-    <SolidColorBrush x:Key="TextControlBackgroundFocused" Color="#1E1E1E" />
-    <SolidColorBrush x:Key="TextControlForeground" Color="#D4D4D4" />
-    <SolidColorBrush x:Key="TextControlForegroundFocused" Color="#D4D4D4" />
-    <SolidColorBrush x:Key="TextControlPlaceholderForeground" Color="#6B6B6B" />
-    <SolidColorBrush x:Key="TextControlBorderBrush" Color="#3F3F46" />
-    <SolidColorBrush x:Key="TextControlBorderBrushPointerOver" Color="#5A5A5A" />
-    <SolidColorBrush x:Key="TextControlBorderBrushFocused" Color="#3794FF" />
-    <SolidColorBrush x:Key="ComboBoxBackground" Color="#1E1E1E" />
-    <SolidColorBrush x:Key="ComboBoxBackgroundPointerOver" Color="#2A2D2F" />
-    <SolidColorBrush x:Key="ComboBoxBackgroundPressed" Color="#2A2D2F" />
-    <SolidColorBrush x:Key="ComboBoxForeground" Color="#D4D4D4" />
-    <SolidColorBrush x:Key="ComboBoxForegroundPointerOver" Color="#D4D4D4" />
-    <SolidColorBrush x:Key="ComboBoxForegroundPressed" Color="#D4D4D4" />
-    <SolidColorBrush x:Key="ComboBoxBorderBrush" Color="#3F3F46" />
-    <SolidColorBrush x:Key="ComboBoxBorderBrushPointerOver" Color="#5A5A5A" />
-    <SolidColorBrush x:Key="ComboBoxBorderBrushPressed" Color="#3794FF" />
-    <SolidColorBrush x:Key="ComboBoxDropDownGlyphForeground" Color="#D4D4D4" />
-    <SolidColorBrush x:Key="ComboBoxDropDownGlyphForegroundPointerOver" Color="#D4D4D4" />
-    <SolidColorBrush x:Key="ComboBoxDropDownGlyphForegroundPressed" Color="#D4D4D4" />
-    <SolidColorBrush x:Key="ComboBoxItemBackground" Color="#1E1E1E" />
-    <SolidColorBrush x:Key="ComboBoxItemBackgroundPointerOver" Color="#252526" />
-    <SolidColorBrush x:Key="ComboBoxItemBackgroundSelected" Color="#094771" />
-    <SolidColorBrush x:Key="ComboBoxItemForeground" Color="#D4D4D4" />
-    <SolidColorBrush x:Key="ComboBoxItemForegroundPointerOver" Color="#D4D4D4" />
-    <SolidColorBrush x:Key="ComboBoxItemForegroundSelected" Color="#D4D4D4" />
-    <SolidColorBrush x:Key="CheckBoxCheckBackgroundStrokeUnchecked" Color="#8A8A8A" />
-    <SolidColorBrush x:Key="CheckBoxCheckBackgroundStrokeUncheckedPointerOver" Color="#D4D4D4" />
-    <SolidColorBrush x:Key="CheckBoxCheckBackgroundStrokeUncheckedPressed" Color="#8A8A8A" />
-    <SolidColorBrush x:Key="CheckBoxCheckBackgroundFillUnchecked" Color="#1E1E1E" />
-    <SolidColorBrush x:Key="CheckBoxCheckBackgroundFillUncheckedPointerOver" Color="#252526" />
-    <SolidColorBrush x:Key="CheckBoxCheckBackgroundStrokeChecked" Color="#3794FF" />
-    <SolidColorBrush x:Key="CheckBoxCheckBackgroundStrokeCheckedPointerOver" Color="#3794FF" />
-    <SolidColorBrush x:Key="CheckBoxCheckBackgroundStrokeCheckedPressed" Color="#3794FF" />
+    <!--
+      Theme-aware brushes only. Every key is defined in the ThemeDictionaries below (Light / Dark /
+      Default) and consumed via {ThemeResource}. There must be NO theme-agnostic copies at the
+      dictionary's top level: a top-level key shadows the matching ThemeDictionaries entry, so the
+      control rendered with those fixed (dark) colors regardless of theme — the bug where the
+      PropertyGrid showed dark controls under the Light theme. Removing them also stops generic keys
+      (TextControlBackground, ComboBoxBackground, …) leaking app-wide when this dictionary is merged
+      into Application.Resources.
+    -->
 
     <ResourceDictionary.ThemeDictionaries>
         <ResourceDictionary x:Key="Light">
