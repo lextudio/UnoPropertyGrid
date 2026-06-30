@@ -11,7 +11,7 @@
     <UnoFeatures>SkiaRenderer;Svg</UnoFeatures>
     <Nullable>enable</Nullable>
     <LangVersion>latest</LangVersion>
-    <UseNuGetPackage>false</UseNuGetPackage>
+    <UseNuGetPackages>false</UseNuGetPackages>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(TargetFramework)' == 'net10.0-windows10.0.19041.0'">
@@ -24,13 +24,13 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
   </PropertyGroup>
 
-  <ItemGroup Condition="'$(UseNuGetPackage)' != 'true'">
+  <ItemGroup Condition="'$(UseNuGetPackages)' != 'true'">
     <ProjectReference Include="..\UnoPropertyGrid\UnoPropertyGrid.csproj" />
     <ProjectReference Include="..\UnoPropertyGrid.Sample.DesignTools\UnoPropertyGrid.Sample.DesignTools.csproj" Condition="'$(Configuration)' == 'Debug'" />
     <ProjectReference Include="..\UnoPropertyGrid.Sample.DesignTools\UnoPropertyGrid.Sample.DesignTools.csproj" Condition="'$(Configuration)' != 'Debug'" ReferenceOutputAssembly="false" PrivateAssets="all" />
   </ItemGroup>
 
-  <ItemGroup Condition="'$(UseNuGetPackage)' == 'true'">
+  <ItemGroup Condition="'$(UseNuGetPackages)' == 'true'">
     <PackageReference Include="LeXtudio.UnoPropertyGrid" />
   </ItemGroup>
 
