@@ -10,7 +10,6 @@ using System.Globalization;
 using System.Linq;
 using Windows.System;
 using Windows.UI;
-using TextBox = LeXtudio.UI.Controls.TextBox;
 
 namespace UnoPropertyGrid.Sample.DesignTools;
 

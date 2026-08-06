@@ -9,7 +9,6 @@ using Microsoft.UI.Xaml.Shapes;
 using Windows.UI;
 using Windows.UI.Text;
 using Button = Microsoft.UI.Xaml.Controls.Button;
-using TextBox = LeXtudio.UI.Controls.TextBox;
 using LeXtudio.UnoPropertyGrid.DesignTools.Extensibility.PropertyEditing;
 
 namespace UnoPropertyGrid;
@@ -977,10 +976,6 @@ public sealed partial class PropertyGridControl : UserControl, INotifyPropertyCh
     {
         var hoverBackground = theme == ElementTheme.Dark ? _backgroundBrush : _panelBrush;
         ApplyTextControlResourcesCore(control, hoverBackground);
-#if !WINDOWS_APP_SDK
-        if (control is TextBox lextudioTextBox)
-            lextudioTextBox.RefreshThemeResources();
-#endif
         // On Uno, ThemeResource for placeholder text inside the TextBox template resolves at
         // app level rather than PropertyGrid scope. Walk the visual tree and set it directly.
         SetPlaceholderForeground(control, _mutedForegroundBrush);

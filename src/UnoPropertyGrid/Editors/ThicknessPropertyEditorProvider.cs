@@ -4,7 +4,6 @@ using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Shapes;
 using System.Globalization;
 using Windows.System;
-using TextBox = LeXtudio.UI.Controls.TextBox;
 
 namespace UnoPropertyGrid;
 

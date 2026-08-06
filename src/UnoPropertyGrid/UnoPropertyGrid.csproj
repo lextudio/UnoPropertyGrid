@@ -44,12 +44,6 @@
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.WinUI.Controls.Sizers" />
   </ItemGroup>
-  <ItemGroup Condition="'$(UseNuGetPackages)' == 'true'">
-    <PackageReference Include="LeXtudio.TextBox" />
-  </ItemGroup>
-  <ItemGroup Condition="'$(UseNuGetPackages)' != 'true'">
-    <ProjectReference Include="..\..\..\TextCore.Uno\src\LeXtudio.TextBox\LeXtudio.TextBox.csproj" />
-  </ItemGroup>
   <ItemGroup>
     <Compile Include="**\*.cs" Exclude="obj\**\*.cs;bin\**\*.cs" />
     <Page Include="PropertyGridControl.xaml" />

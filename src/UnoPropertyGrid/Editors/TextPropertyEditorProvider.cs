@@ -1,6 +1,5 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using TextBox = LeXtudio.UI.Controls.TextBox;
 
 namespace UnoPropertyGrid;
 

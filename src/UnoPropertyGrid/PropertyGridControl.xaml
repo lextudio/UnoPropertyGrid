@@ -4,7 +4,6 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="using:UnoPropertyGrid"
     xmlns:toolkit="using:CommunityToolkit.WinUI.Controls"
-    xmlns:lextudio="using:LeXtudio.UI.Controls"
     FontFamily="{ThemeResource PropertyGridFontFamily}">
 
     <UserControl.Resources>
@@ -144,7 +143,7 @@
                             TextTrimming="CharacterEllipsis" />
                     </Border>
 
-                    <lextudio:TextBox
+                    <TextBox
                         Grid.Column="1"
                         MinHeight="24"
                         Padding="4,2"
@@ -220,7 +219,7 @@
                 FontWeight="SemiBold"
                 Foreground="{ThemeResource PropertyGridForegroundBrush}"
                 Text="Name" />
-            <lextudio:TextBox
+            <TextBox
                 x:Name="ObjectNameBox"
                 Grid.Column="2"
                 MinHeight="22"
@@ -290,7 +289,7 @@
         </Grid>
 
         <Grid Grid.Row="1" Margin="8,4,8,3" Background="{ThemeResource PropertyGridPanelBrush}">
-            <lextudio:TextBox
+            <TextBox
                 x:Name="SearchBox"
                 MinHeight="22"
                 Padding="4,2,28,2"
